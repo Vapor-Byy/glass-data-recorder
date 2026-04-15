@@ -301,3 +301,81 @@ body {
     transform: none;
   }
 }
+
+/* ========== 首页与导航 ========== */
+.app--home {
+  max-width: 560px;
+}
+
+.header--home {
+  padding-top: clamp(2rem, 6vw, 3rem);
+  padding-bottom: clamp(1.25rem, 4vw, 2rem);
+}
+
+.home-intro .section-title {
+  margin-bottom: 1rem;
+}
+
+.tool-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tool-card {
+  margin: 0;
+}
+
+.tool-card-link {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 1.1rem 1.15rem;
+  border-radius: 12px;
+  text-decoration: none;
+  color: inherit;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.tool-card-link:hover {
+  border-color: var(--accent-soft);
+  background: rgba(91, 155, 213, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.tool-card-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.tool-card-desc {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.tool-card-cta {
+  font-size: 0.82rem;
+  color: var(--accent);
+  margin-top: 0.25rem;
+}
+
+.page-nav {
+  padding: 0.65rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.nav-link {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.nav-link:hover {
+  color: var(--accent);
+}

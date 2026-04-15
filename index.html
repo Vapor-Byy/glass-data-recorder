@@ -3,52 +3,34 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>本地记录 · 玻璃风格</title>
+  <title>本地工具集 · 首页</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="bg-gradient" aria-hidden="true"></div>
 
-  <main class="app">
-    <header class="glass panel header">
-      <h1 class="title">本地记录</h1>
-      <p class="subtitle">输入内容后保存，数据仅保存在本机浏览器中</p>
+  <main class="app app--home">
+    <header class="glass panel header header--home">
+      <h1 class="title">本地工具集</h1>
+      <p class="subtitle">纯前端页面，数据仅存于本机浏览器</p>
     </header>
 
-    <section class="glass panel input-section" aria-labelledby="input-heading">
-      <h2 id="input-heading" class="section-title">新建记录</h2>
-      <form id="record-form" class="record-form" novalidate>
-        <label for="record-input" class="visually-hidden">记录内容</label>
-        <textarea
-          id="record-input"
-          name="content"
-          class="record-input"
-          rows="3"
-          placeholder="在此输入要保存的内容…"
-          maxlength="2000"
-          required
-        ></textarea>
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary">保存</button>
-          <button type="button" id="clear-input" class="btn btn-ghost">清空输入</button>
-        </div>
-      </form>
-    </section>
-
-    <section class="glass panel list-section" aria-labelledby="list-heading">
-      <div class="list-header">
-        <h2 id="list-heading" class="section-title">全部记录</h2>
-        <span id="record-count" class="badge" aria-live="polite">0 条</span>
-      </div>
-      <ul id="record-list" class="record-list"></ul>
-      <p id="empty-hint" class="empty-hint">暂无记录，保存一条试试吧。</p>
+    <section class="glass panel home-intro" aria-labelledby="tools-heading">
+      <h2 id="tools-heading" class="section-title">可用工具</h2>
+      <ul class="tool-list">
+        <li class="tool-card">
+          <a href="tool.html" class="tool-card-link">
+            <span class="tool-card-title">本地记录</span>
+            <span class="tool-card-desc">输入内容、保存并在列表中查看，刷新后数据仍在</span>
+            <span class="tool-card-cta">进入 →</span>
+          </a>
+        </li>
+      </ul>
     </section>
   </main>
 
   <footer class="footer">
-    <small>数据存储于浏览器 localStorage，清除站点数据会丢失记录。</small>
+    <small>本站为静态页面，可部署至任意静态托管。</small>
   </footer>
-
-  <script src="app.js" defer></script>
 </body>
 </html>
