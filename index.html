@@ -4,37 +4,76 @@
 <head>
     <meta charset="UTF-8">
     <title>My Workbench</title>
-   <style>
+  <style>
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
-    background: linear-gradient(135deg, #e0f2fe, #f0fdf4);
     margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont;
+    background: linear-gradient(135deg, #e0f2fe, #f0fdf4);
+}
+
+/* 整体布局 */
+.app {
+    display: flex;
+    height: 100vh;
+}
+
+/* 侧边栏 */
+.sidebar {
+    width: 220px;
     padding: 20px;
-    color: #0f172a;
+    backdrop-filter: blur(20px);
+    background: rgba(255,255,255,0.6);
+    box-shadow: 5px 0 20px rgba(0,0,0,0.05);
 }
 
-/* 主容器 */
-.container {
-    max-width: 1100px;
-    margin: 40px auto;
+.menu-item {
+    padding: 10px;
+    border-radius: 10px;
+    margin-top: 10px;
+    cursor: pointer;
 }
 
-/* 输入框 */
+.menu-item:hover {
+    background: rgba(255,255,255,0.6);
+}
+
+.menu-item.active {
+    background: rgba(59,130,246,0.3);
+}
+
+/* 主区域 */
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 顶部输入 */
+.topbar {
+    padding: 20px;
+}
+
 input {
     width: 100%;
     padding: 16px;
-    font-size: 16px;
-    border-radius: 16px;
+    border-radius: 14px;
     border: none;
     outline: none;
-    backdrop-filter: blur(10px);
     background: rgba(255,255,255,0.6);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    backdrop-filter: blur(10px);
 }
 
-/* 三栏布局 */
-h3 {
-    margin-bottom: 10px;
+/* 内容区 */
+.content {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    overflow: auto;
+}
+
+/* 列 */
+.column {
+    flex: 1;
 }
 
 /* 卡片 */
@@ -43,70 +82,51 @@ h3 {
 #noteList div {
     margin-top: 10px;
     padding: 12px;
-    border-radius: 16px;
-    backdrop-filter: blur(12px);
+    border-radius: 14px;
     background: rgba(255,255,255,0.6);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-    transition: all 0.2s ease;
-}
-
-/* 悬浮效果 */
-#taskList div:hover,
-#linkList div:hover,
-#noteList div:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 15px 30px rgba(0,0,0,0.12);
-}
-
-/* 按钮 */
-button {
-    border: none;
-    border-radius: 10px;
-    padding: 6px 10px;
-    cursor: pointer;
-    backdrop-filter: blur(8px);
-    background: rgba(255,255,255,0.7);
-}
-
-/* 删除按钮 */
-button:last-child {
-    background: rgba(239,68,68,0.8);
-    color: #fff;
-}
-
-/* 勾选按钮 */
-button:first-child {
-    background: rgba(16,185,129,0.8);
-    color: #fff;
-}
-
-/* 链接颜色 */
-a {
-    color: #2563eb;
-    text-decoration: none;
-}
-
-a:hover {
-    text-decoration: underline;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.08);
 }
 </style>
 </head>
-<body>
-    <div class="container">
-        <h1>工作台</h1>
-        <input id="inputBox" placeholder="输入任务 / 想法 / 链接，回车保存">
-        <div style="display:flex; gap:10px; margin-top:20px;">
-    <div style="flex:1;">
-        <h3>任务</h3>
-        <div id="taskList"></div>
+<div class="app">
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <h2>Workbench</h2>
+        <div class="menu">
+            <div class="menu-item active">全部</div>
+            <div class="menu-item">任务</div>
+            <div class="menu-item">链接</div>
+            <div class="menu-item">记录</div>
+        </div>
     </div>
-    <div style="flex:1;">
-        <h3>链接</h3>
-        <div id="linkList"></div>
+
+    <!-- 主区域 -->
+    <div class="main">
+        <div class="topbar">
+            <input id="inputBox" placeholder="输入任务 / 想法 / 链接，回车保存">
+        </div>
+ <div id="browserBox" style="display:none; margin:0 20px 20px 20px;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+            <span>内嵌浏览</span>
+            <button onclick="closeBrowser()">关闭</button>
+        </div>
+        <iframe id="browserFrame" style="width:100%; height:300px; border:none; border-radius:12px;"></iframe>
     </div>
-    <div style="flex:1;">
-        <h3>记录</h3>
-        <div id="noteList"></div>
+        <div class="content">
+            <div class="column">
+                <h3>任务</h3>
+                <div id="taskList"></div>
+            </div>
+            <div class="column">
+                <h3>链接</h3>
+                <div id="linkList"></div>
+            </div>
+            <div class="column">
+                <h3>记录</h3>
+                <div id="noteList"></div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -118,7 +138,18 @@ let data = JSON.parse(localStorage.getItem('workbench') || '[]');
 
 let dragIndex = null;
 
-function getType(text) {
+function openInApp(url) {
+    const box = document.getElementById('browserBox');
+    const frame = document.getElementById('browserFrame');
+
+    box.style.display = 'block';
+    frame.src = url;
+}
+
+function closeBrowser() {
+    document.getElementById('browserBox').style.display = 'none';
+    document.getElementById('browserFrame').src = '';
+}function getType(text) {
     if (text.startsWith('http')) return 'link';
     if (text.includes('明天') || text.includes('待办') || text.includes('todo')) return 'task';
     return 'note';
@@ -149,8 +180,16 @@ function render() {
         const content = document.createElement('div');
 
         if (item.type === 'link') {
-            content.innerHTML = `<a href="${item.text}" target="_blank" style="color:white;">${item.text}</a>`;
-            div.style.background = '#1d4ed8';
+           content.innerHTML = `
+<div>
+    <span style="cursor:pointer; color:#2563eb;"
+    onclick="openInApp('${item.text}')">
+        ${item.text}
+    </span>
+    <button onclick="window.open('${item.text}')"
+    style="margin-left:10px;">↗</button>
+</div>
+`;
         } else if (item.type === 'task') {
             content.innerText = item.text + '（' + item.time + '）';
             div.style.background = '#059669';
