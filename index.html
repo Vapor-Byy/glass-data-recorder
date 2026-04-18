@@ -4,40 +4,111 @@
 <head>
     <meta charset="UTF-8">
     <title>My Workbench</title>
-    <style>
-        body {
-            font-family: Arial;
-            background: #0f172a;
-            color: #fff;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 600px;
-            margin: 80px auto;
-        }
-        input {
-            width: 100%;
-            padding: 15px;
-            font-size: 16px;
-            border-radius: 10px;
-            border: none;
-            outline: none;
-        }
-        #list div {
-            margin-top: 10px;
-            padding: 10px;
-            background: #1e293b;
-            border-radius: 8px;
-        }
-    </style>
+   <style>
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+    background: linear-gradient(135deg, #e0f2fe, #f0fdf4);
+    margin: 0;
+    padding: 20px;
+    color: #0f172a;
+}
+
+/* 主容器 */
+.container {
+    max-width: 1100px;
+    margin: 40px auto;
+}
+
+/* 输入框 */
+input {
+    width: 100%;
+    padding: 16px;
+    font-size: 16px;
+    border-radius: 16px;
+    border: none;
+    outline: none;
+    backdrop-filter: blur(10px);
+    background: rgba(255,255,255,0.6);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+}
+
+/* 三栏布局 */
+h3 {
+    margin-bottom: 10px;
+}
+
+/* 卡片 */
+#taskList div,
+#linkList div,
+#noteList div {
+    margin-top: 10px;
+    padding: 12px;
+    border-radius: 16px;
+    backdrop-filter: blur(12px);
+    background: rgba(255,255,255,0.6);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    transition: all 0.2s ease;
+}
+
+/* 悬浮效果 */
+#taskList div:hover,
+#linkList div:hover,
+#noteList div:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(0,0,0,0.12);
+}
+
+/* 按钮 */
+button {
+    border: none;
+    border-radius: 10px;
+    padding: 6px 10px;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    background: rgba(255,255,255,0.7);
+}
+
+/* 删除按钮 */
+button:last-child {
+    background: rgba(239,68,68,0.8);
+    color: #fff;
+}
+
+/* 勾选按钮 */
+button:first-child {
+    background: rgba(16,185,129,0.8);
+    color: #fff;
+}
+
+/* 链接颜色 */
+a {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+</style>
 </head>
 <body>
     <div class="container">
         <h1>工作台</h1>
         <input id="inputBox" placeholder="输入任务 / 想法 / 链接，回车保存">
-        <div id="list"></div>
+        <div style="display:flex; gap:10px; margin-top:20px;">
+    <div style="flex:1;">
+        <h3>任务</h3>
+        <div id="taskList"></div>
     </div>
+    <div style="flex:1;">
+        <h3>链接</h3>
+        <div id="linkList"></div>
+    </div>
+    <div style="flex:1;">
+        <h3>记录</h3>
+        <div id="noteList"></div>
+    </div>
+</div>
 
 ```
 <script>
@@ -45,42 +116,49 @@ const input = document.getElementById('inputBox');
 
 let data = JSON.parse(localStorage.getItem('workbench') || '[]');
 
-// 判断类型
+let dragIndex = null;
+
 function getType(text) {
     if (text.startsWith('http')) return 'link';
     if (text.includes('明天') || text.includes('待办') || text.includes('todo')) return 'task';
     return 'note';
 }
 
-// 渲染
 function render() {
-    const list = document.getElementById('list');
-    list.innerHTML = '';
+    const taskList = document.getElementById('taskList');
+    const linkList = document.getElementById('linkList');
+    const noteList = document.getElementById('noteList');
+
+    taskList.innerHTML = '';
+    linkList.innerHTML = '';
+    noteList.innerHTML = '';
 
     data.forEach((item, index) => {
         const div = document.createElement('div');
+        div.draggable = true;
+        div.dataset.index = index;
+
         div.style.marginTop = '10px';
         div.style.padding = '10px';
         div.style.borderRadius = '8px';
         div.style.display = 'flex';
         div.style.alignItems = 'center';
         div.style.justifyContent = 'space-between';
+        div.style.cursor = 'move';
 
-        // 左侧内容
         const content = document.createElement('div');
 
         if (item.type === 'link') {
             content.innerHTML = `<a href="${item.text}" target="_blank" style="color:white;">${item.text}</a>`;
+            div.style.background = '#1d4ed8';
+        } else if (item.type === 'task') {
+            content.innerText = item.text + '（' + item.time + '）';
+            div.style.background = '#059669';
         } else {
             content.innerText = item.text + '（' + item.time + '）';
+            div.style.background = '#1e293b';
         }
 
-        // 样式
-        if (item.type === 'link') div.style.background = '#1d4ed8';
-        if (item.type === 'task') div.style.background = '#059669';
-        if (item.type === 'note') div.style.background = '#1e293b';
-
-        // 如果完成了
         if (item.done) {
             content.style.textDecoration = 'line-through';
             content.style.opacity = '0.6';
@@ -88,11 +166,12 @@ function render() {
 
         div.appendChild(content);
 
-        // 任务才有勾选按钮
+        const actions = document.createElement('div');
+
         if (item.type === 'task') {
             const btn = document.createElement('button');
             btn.innerText = item.done ? '✔' : '○';
-            btn.style.marginLeft = '10px';
+            btn.style.marginRight = '10px';
 
             btn.onclick = () => {
                 item.done = !item.done;
@@ -100,10 +179,51 @@ function render() {
                 render();
             };
 
-            div.appendChild(btn);
+            actions.appendChild(btn);
         }
 
-        list.appendChild(div);
+        const delBtn = document.createElement('button');
+        delBtn.innerText = '删除';
+        delBtn.style.background = '#ef4444';
+        delBtn.style.color = '#fff';
+        delBtn.style.border = 'none';
+        delBtn.style.borderRadius = '5px';
+        delBtn.style.padding = '5px 8px';
+
+        delBtn.onclick = () => {
+            data.splice(index, 1);
+            localStorage.setItem('workbench', JSON.stringify(data));
+            render();
+        };
+
+        actions.appendChild(delBtn);
+
+        div.appendChild(actions);
+
+        // 拖拽
+        div.addEventListener('dragstart', () => {
+            dragIndex = index;
+        });
+
+        div.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        div.addEventListener('drop', () => {
+            const targetIndex = index;
+            const draggedItem = data[dragIndex];
+
+            data.splice(dragIndex, 1);
+            data.splice(targetIndex, 0, draggedItem);
+
+            localStorage.setItem('workbench', JSON.stringify(data));
+            render();
+        });
+
+        // 分类插入
+        if (item.type === 'task') taskList.appendChild(div);
+        if (item.type === 'link') linkList.appendChild(div);
+        if (item.type === 'note') noteList.appendChild(div);
     });
 }
 
