@@ -1,36 +1,135 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+
+<html lang="zh">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>本地工具集 · 首页</title>
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <title>My Workbench</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #0f172a;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 80px auto;
+        }
+        input {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 10px;
+            border: none;
+            outline: none;
+        }
+        #list div {
+            margin-top: 10px;
+            padding: 10px;
+            background: #1e293b;
+            border-radius: 8px;
+        }
+    </style>
 </head>
 <body>
-  <div class="bg-gradient" aria-hidden="true"></div>
+    <div class="container">
+        <h1>工作台</h1>
+        <input id="inputBox" placeholder="输入任务 / 想法 / 链接，回车保存">
+        <div id="list"></div>
+    </div>
 
-  <main class="app app--home">
-    <header class="glass panel header header--home">
-      <h1 class="title">本地工具集</h1>
-      <p class="subtitle">纯前端页面，数据仅存于本机浏览器</p>
-    </header>
+```
+<script>
+const input = document.getElementById('inputBox');
 
-    <section class="glass panel home-intro" aria-labelledby="tools-heading">
-      <h2 id="tools-heading" class="section-title">可用工具</h2>
-      <ul class="tool-list">
-        <li class="tool-card">
-          <a href="tool.html" class="tool-card-link">
-            <span class="tool-card-title">本地记录</span>
-            <span class="tool-card-desc">输入内容、保存并在列表中查看，刷新后数据仍在</span>
-            <span class="tool-card-cta">进入 →</span>
-          </a>
-        </li>
-      </ul>
-    </section>
-  </main>
+let data = JSON.parse(localStorage.getItem('workbench') || '[]');
 
-  <footer class="footer">
-    <small>本站为静态页面，可部署至任意静态托管。</small>
-  </footer>
+// 判断类型
+function getType(text) {
+    if (text.startsWith('http')) return 'link';
+    if (text.includes('明天') || text.includes('待办') || text.includes('todo')) return 'task';
+    return 'note';
+}
+
+// 渲染
+function render() {
+    const list = document.getElementById('list');
+    list.innerHTML = '';
+
+    data.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.style.marginTop = '10px';
+        div.style.padding = '10px';
+        div.style.borderRadius = '8px';
+        div.style.display = 'flex';
+        div.style.alignItems = 'center';
+        div.style.justifyContent = 'space-between';
+
+        // 左侧内容
+        const content = document.createElement('div');
+
+        if (item.type === 'link') {
+            content.innerHTML = `<a href="${item.text}" target="_blank" style="color:white;">${item.text}</a>`;
+        } else {
+            content.innerText = item.text + '（' + item.time + '）';
+        }
+
+        // 样式
+        if (item.type === 'link') div.style.background = '#1d4ed8';
+        if (item.type === 'task') div.style.background = '#059669';
+        if (item.type === 'note') div.style.background = '#1e293b';
+
+        // 如果完成了
+        if (item.done) {
+            content.style.textDecoration = 'line-through';
+            content.style.opacity = '0.6';
+        }
+
+        div.appendChild(content);
+
+        // 任务才有勾选按钮
+        if (item.type === 'task') {
+            const btn = document.createElement('button');
+            btn.innerText = item.done ? '✔' : '○';
+            btn.style.marginLeft = '10px';
+
+            btn.onclick = () => {
+                item.done = !item.done;
+                localStorage.setItem('workbench', JSON.stringify(data));
+                render();
+            };
+
+            div.appendChild(btn);
+        }
+
+        list.appendChild(div);
+    });
+}
+
+render();
+
+input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        const value = input.value.trim();
+        if (!value) return;
+
+        data.push({
+            text: value,
+            time: new Date().toLocaleString(),
+            type: getType(value),
+            done: false
+        });
+
+        localStorage.setItem('workbench', JSON.stringify(data));
+
+        input.value = '';
+
+        render();
+    }
+});
+</script>
+```
+
 </body>
 </html>
