@@ -1,239 +1,115 @@
 <!DOCTYPE html>
-
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>My Workbench</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vapor 导航</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<div class="app">
-    <!-- 侧边栏 -->
-    <div class="sidebar">
-        <h2>Workbench</h2>
-        <div class="menu">
-            <div class="menu-item active">全部</div>
-            <div class="menu-item">任务</div>
-            <div class="menu-item">链接</div>
+<body>
+    <div class="app">
+        <!-- 侧边栏 -->
+        <div class="sidebar">
+            <div class="sidebar-top">
+                <h2 id="appTitle">Vapor导航</h2>
+            </div>
+            <nav class="menu">
+                <div class="menu-item active" data-view="all">全部</div>
+                <div class="menu-item" data-view="tasks">任务</div>
+                <div class="menu-item" data-view="links">链接</div>
+            </nav>
+            <div class="sidebar-footer">
+                <button type="button" id="themeToggle" class="theme-toggle-btn" aria-label="切换主题">🌙</button>
+            </div>
+        </div>
+
+        <!-- 主区域 -->
+        <div class="main">
+            <div class="topbar">
+                <div class="topbar-left">
+                    <input id="inputBox" placeholder="输入任务 / 想法 / 链接，回车保存">
+                </div>
+                <div class="topbar-right">
+                    <div class="topbar-chip">
+                        <span class="chip-label">当前时间</span>
+                        <span id="clockTime">--:--</span>
+                    </div>
+                    <div class="topbar-chip">
+                        <span class="chip-label">今日日期</span>
+                        <span id="clockDate">----年--月--日</span>
+                    </div>
+                    <div class="topbar-chip">
+                        <span class="chip-label">天气</span>
+                        <span id="weatherText">多云 18°C</span>
+                    </div>
+                </div>
+            </div>
+            <div class="dashboard-panel" id="dashboardPanel">
+                <div class="dashboard-card">
+                    <h4>今日任务摘要</h4>
+                    <p id="summaryTaskCount">加载中</p>
+                </div>
+                <div class="dashboard-card">
+                    <h4>最近记录</h4>
+                    <div id="recentRecords">加载中</div>
+                </div>
+                <div class="dashboard-card">
+                    <h4>常用网站快捷入口</h4>
+                    <div id="dashboardLinks">暂无快捷入口</div>
+                </div>
+                <div class="dashboard-card">
+                    <h4>快捷操作</h4>
+                    <button type="button" id="quickAdd" class="action-btn">聚焦输入</button>
+                </div>
+            </div>
+            <div class="content" id="contentPanel">
+                <div class="column" id="tasksColumn">
+                    <h3>任务与记录</h3>
+                    <div id="taskList"></div>
+                </div>
+                <div class="column" id="linksColumn">
+                    <h3>链接</h3>
+                    <div id="linkList"></div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- 主区域 -->
-    <div class="main">
-        <div class="topbar">
-            <input id="inputBox" placeholder="输入任务 / 想法 / 链接，回车保存">
-        </div>
-        <div class="content">
-            <div class="column">
-                <h3>任务与记录</h3>
-                <div id="taskList"></div>
+    <div class="settings-modal hidden" id="settingsModal">
+        <div class="settings-panel">
+            <div class="settings-header">
+                <div>
+                    <h3>设置</h3>
+                    <p>个性化工作台配置</p>
+                </div>
+                <button class="close-settings" id="closeSettings" aria-label="关闭设置">×</button>
             </div>
-            <div class="column">
-                <h3>链接</h3>
-                <div id="linkList"></div>
+            <div class="settings-section">
+                <h4>数据管理</h4>
+                <div class="settings-actions">
+                    <button type="button" id="clearDataBtn">清空数据</button>
+                    <button type="button" id="exportDataBtn">导出JSON</button>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h4>默认分类规则</h4>
+                <label>任务关键词（逗号分隔）</label>
+                <input id="taskKeywords" placeholder="例如：明天, 待办, todo">
+                <label>链接识别规则</label>
+                <input id="linkPattern" placeholder="例如：^(https?://)?([\w.-]+)\.[a-z]{2,6}(/.*)?$">
+            </div>
+            <div class="settings-section">
+                <h4>显示设置</h4>
+                <label class="switch-row"><input type="checkbox" id="showTimeToggle"> 显示时间</label>
+                <label class="switch-row"><input type="checkbox" id="autoSortToggle"> 自动排序</label>
+            </div>
+            <div class="settings-section">
+                <h4>关于</h4>
+                <p>版本号：<span id="appVersion">0.1.0</span></p>
             </div>
         </div>
     </div>
-</div>
 
-```
-<script>
-const input = document.getElementById('inputBox');
-
-let data = JSON.parse(localStorage.getItem('workbench') || '[]');
-
-let dragIndex = null;
-let currentFilter = '全部'; // 当前过滤器
-
-// 菜单点击事件
-document.addEventListener('DOMContentLoaded', function() {
-    const menuItems = document.querySelectorAll('.menu-item');
-    menuItems.forEach(item => {
-        item.addEventListener('click', function() {
-            // 移除所有active类
-            menuItems.forEach(i => i.classList.remove('active'));
-            // 添加active类到当前点击的项
-            this.classList.add('active');
-            // 设置过滤器
-            currentFilter = this.textContent;
-            // 重新渲染
-            render();
-        });
-    });
-
-    // 侧边栏宽度拖拽
-    const sidebar = document.querySelector('.sidebar');
-    let isResizing = false;
-    let startX = 0;
-    let startWidth = 0;
-
-    sidebar.addEventListener('mousedown', function(e) {
-        if (e.offsetX > sidebar.offsetWidth - 10) {
-            isResizing = true;
-            startX = e.clientX;
-            startWidth = sidebar.offsetWidth;
-            document.body.style.cursor = 'ew-resize';
-            document.body.style.userSelect = 'none';
-        }
-    });
-
-    document.addEventListener('mousemove', function(e) {
-        if (isResizing) {
-            const newWidth = startWidth + (e.clientX - startX);
-            if (newWidth >= 120 && newWidth <= 180) {
-                sidebar.style.width = newWidth + 'px';
-            }
-        }
-    });
-
-    document.addEventListener('mouseup', function() {
-        if (isResizing) {
-            isResizing = false;
-            document.body.style.cursor = '';
-            document.body.style.userSelect = '';
-        }
-    });
-});
-
-function openLink(url) {
-    // 如果URL不以http开头，添加https://
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        url = 'https://' + url;
-    }
-    window.open(url, '_blank');
-}
-
-function getType(text) {
-    // 检查是否为URL（带协议或不带协议的域名）
-    const urlPattern = /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/i;
-    if (urlPattern.test(text)) return 'link';
-    
-    if (text.includes('明天') || text.includes('待办') || text.includes('todo')) return 'task';
-    return 'note';
-}
-
-function render() {
-    const taskList = document.getElementById('taskList');
-    const linkList = document.getElementById('linkList');
-
-    taskList.innerHTML = '';
-    linkList.innerHTML = '';
-
-    data.forEach((item, index) => {
-        // 根据当前过滤器决定是否显示
-        if (currentFilter !== '全部') {
-            const filterMap = {'任务': 'task', '链接': 'link'};
-            if (currentFilter === '任务' && item.type !== 'task' && item.type !== 'note') return;
-            if (currentFilter === '链接' && item.type !== 'link') return;
-        }
-
-        const div = document.createElement('div');
-        div.draggable = true;
-        div.dataset.index = index;
-
-        const content = document.createElement('div');
-        content.style.flex = '1';
-
-        if (item.type === 'link') {
-           const linkUrl = item.text.startsWith('http') ? item.text : 'https://' + item.text;
-           content.innerHTML = `
-<span style="cursor:pointer;" onclick="openLink('${item.text}')">
-    ${item.text}
-</span>
-`;
-           linkList.appendChild(div);
-        } else {
-            // 任务和记录统一显示
-            content.innerHTML = `
-<span>${item.text}${item.done ? '' : ''}（${item.time}）</span>
-`;
-            if (item.done) {
-                content.style.textDecoration = 'line-through';
-                content.style.opacity = '0.6';
-            }
-            taskList.appendChild(div);
-        }
-
-        div.appendChild(content);
-
-        const actions = document.createElement('div');
-        actions.style.display = 'flex';
-        actions.style.gap = '8px';
-
-        // 给所有类型都添加完成勾选按钮
-        const btn = document.createElement('button');
-        btn.innerText = item.done ? '✔' : '○';
-        btn.style.minWidth = '30px';
-        btn.style.padding = '6px 8px';
-        
-        btn.onclick = (e) => {
-            e.stopPropagation();
-            item.done = !item.done;
-            localStorage.setItem('workbench', JSON.stringify(data));
-            render();
-        };
-
-        actions.appendChild(btn);
-
-        const delBtn = document.createElement('button');
-        delBtn.innerText = '删除';
-        delBtn.style.minWidth = '40px';
-        delBtn.style.padding = '6px 8px';
-
-        delBtn.onclick = (e) => {
-            e.stopPropagation();
-            data.splice(index, 1);
-            localStorage.setItem('workbench', JSON.stringify(data));
-            render();
-        };
-
-        actions.appendChild(delBtn);
-        div.appendChild(actions);
-
-        // 拖拽
-        div.addEventListener('dragstart', () => {
-            dragIndex = index;
-        });
-
-        div.addEventListener('dragover', (e) => {
-            e.preventDefault();
-        });
-
-        div.addEventListener('drop', () => {
-            const targetIndex = index;
-            const draggedItem = data[dragIndex];
-
-            data.splice(dragIndex, 1);
-            data.splice(targetIndex, 0, draggedItem);
-
-            localStorage.setItem('workbench', JSON.stringify(data));
-            render();
-        });
-    });
-}
-
-render();
-
-input.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-        const value = input.value.trim();
-        if (!value) return;
-
-        data.push({
-            text: value,
-            time: new Date().toLocaleString(),
-            type: getType(value),
-            done: false
-        });
-
-        localStorage.setItem('workbench', JSON.stringify(data));
-
-        input.value = '';
-
-        render();
-    }
-});
-</script>
-```
-
+    <script src="script.js"></script>
 </body>
 </html>
