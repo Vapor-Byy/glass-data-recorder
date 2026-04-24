@@ -1,0 +1,256 @@
+/* 
+   玻璃数据记录器 - UI 样式表
+   透明液态玻璃风格设计
+*/
+
+/* ============ 基础样式 ============ */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+    background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 25%, #7c3aed 50%, #2563eb 75%, #0369a1 100%);
+    background-size: 400% 400%;
+    animation: gradientShift 15s ease infinite;
+    min-height: 100vh;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* ============ 整体布局 ============ */
+.app {
+    display: flex;
+    height: 100vh;
+}
+
+/* ============ 侧边栏 ============ */
+.sidebar {
+    width: 180px;
+    max-width: 180px;
+    min-width: 120px;
+    padding: 20px;
+    backdrop-filter: blur(30px);
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.2);
+    position: relative;
+}
+
+.sidebar::after {
+    content: '';
+    position: absolute;
+    right: -5px;
+    top: 0;
+    bottom: 0;
+    width: 10px;
+    cursor: ew-resize;
+    background: transparent;
+}
+
+.sidebar h2 {
+    margin: 0 0 15px 0;
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.menu {
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-item {
+    padding: 12px 14px;
+    border-radius: 12px;
+    margin-top: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.menu-item:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.95);
+    transform: translateX(4px);
+}
+
+.menu-item.active {
+    background: rgba(255, 255, 255, 0.3);
+    color: rgba(255, 255, 255, 1);
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+}
+
+/* ============ 主区域 ============ */
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+/* ============ 顶部输入栏 ============ */
+.topbar {
+    padding: 20px;
+    background: transparent;
+    flex-shrink: 0;
+}
+
+input {
+    width: 100%;
+    padding: 14px 18px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    outline: none;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(30px);
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.95);
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15);
+}
+
+input:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.35);
+}
+
+input:focus {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.45);
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.3);
+}
+
+input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+/* ============ 内容区 ============ */
+.content {
+    flex: 1;
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    overflow: auto;
+    position: relative;
+}
+
+/* ============ 列 ============ */
+.column {
+    flex: 1;
+    min-width: 0;
+}
+
+.column h3 {
+    margin: 0 0 15px 0;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* ============ 卡片 ============ */
+#taskList div,
+#linkList div {
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+    color: rgba(255, 255, 255, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#taskList div:hover,
+#linkList div:hover {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    transform: translateY(-4px);
+}
+
+#taskList div span,
+#linkList div span {
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 400;
+    flex: 1;
+}
+
+#linkList div span {
+    color: rgba(147, 197, 253, 1);
+    font-weight: 500;
+}
+
+#linkList div span:hover {
+    color: rgba(191, 219, 254, 1);
+    text-decoration: underline;
+}
+
+/* ============ 按钮 ============ */
+button {
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(20px);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+button[onclick*="openLink"] {
+    background: rgba(147, 197, 253, 0.2);
+    border-color: rgba(147, 197, 253, 0.3);
+    color: rgba(147, 197, 253, 1);
+}
+
+button[onclick*="openLink"]:hover {
+    background: rgba(147, 197, 253, 0.3);
+    border-color: rgba(147, 197, 253, 0.5);
+}
+
+/* ============ 滚动条样式 ============ */
+.content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.content::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+.content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+}
+
+.content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
