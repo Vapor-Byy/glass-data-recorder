@@ -71,10 +71,25 @@ function formatDateTime(date) {
     return `${Y}年${M}月${D}日 ${H}:${m}`;
 }
 
+function getWeekdayInitial(date) {
+    const letters = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    return letters[date.getDay()];
+}
+
+function getWeatherText() {
+    const hour = new Date().getHours();
+    if (hour >= 6 && hour < 12) return '☀️ 晴 18°C';
+    if (hour >= 12 && hour < 17) return '☁️ 多云 20°C';
+    if (hour >= 17 && hour < 21) return '🌧 小雨 16°C';
+    return '🌫 阴 14°C';
+}
+
 function updateTopbarClock() {
     const now = new Date();
-    document.getElementById('clockTime').textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    document.getElementById('clockTime').textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
     document.getElementById('clockDate').textContent = `${now.getFullYear()}年${String(now.getMonth() + 1).padStart(2, '0')}月${String(now.getDate()).padStart(2, '0')}日`;
+    document.getElementById('weekdayLabel').textContent = getWeekdayInitial(now);
+    document.getElementById('weatherText').textContent = getWeatherText();
 }
 
 function loadData() {
@@ -157,14 +172,26 @@ function createCard(item, index) {
     const content = document.createElement('div');
     content.className = 'item-content';
 
-    const text = document.createElement('div');
-    text.className = 'item-text';
-    text.textContent = item.text;
-    if (item.done) {
-        text.style.textDecoration = 'line-through';
-        text.style.opacity = '0.7';
+    let href = '';
+    if (item.type === 'link') {
+        href = item.text.match(/^https?:\/\//i) ? item.text : `https://${item.text}`;
+        const linkEl = document.createElement('a');
+        linkEl.className = 'item-text link-entry';
+        linkEl.href = href;
+        linkEl.target = '_blank';
+        linkEl.rel = 'noopener noreferrer';
+        linkEl.textContent = item.text;
+        content.appendChild(linkEl);
+    } else {
+        const text = document.createElement('div');
+        text.className = 'item-text';
+        text.textContent = item.text;
+        if (item.done) {
+            text.style.textDecoration = 'line-through';
+            text.style.opacity = '0.7';
+        }
+        content.appendChild(text);
     }
-    content.appendChild(text);
 
     if (item.type !== 'link' && settings.showTime) {
         const meta = document.createElement('div');
@@ -177,6 +204,17 @@ function createCard(item, index) {
 
     const actions = document.createElement('div');
     actions.className = 'item-actions';
+
+    if (item.type === 'link') {
+        const visitButton = document.createElement('button');
+        visitButton.className = 'action-btn';
+        visitButton.innerText = '访问';
+        visitButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            window.open(href, '_blank', 'noopener');
+        });
+        actions.appendChild(visitButton);
+    }
 
     if (item.type !== 'link') {
         const toggleButton = document.createElement('button');
@@ -349,7 +387,7 @@ applyTheme();
 loadData();
 updateSettingsUI();
 updateTopbarClock();
-setInterval(updateTopbarClock, 30000);
+setInterval(updateTopbarClock, 1000);
 render();
 
 input.addEventListener('keydown', (event) => {

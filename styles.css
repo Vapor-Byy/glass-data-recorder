@@ -72,6 +72,10 @@ body.theme-night .sidebar {
 
 .sidebar-top {
     margin-bottom: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 58px;
 }
 
 .sidebar h2 {
@@ -162,15 +166,16 @@ body.theme-night .theme-toggle-btn {
 
 .topbar {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-between;
-    gap: 20px;
-    padding: 26px 28px;
+    gap: 16px;
+    padding: 22px 28px;
     background: rgba(255, 255, 255, 0.72);
     border-bottom: 1px solid var(--border);
     backdrop-filter: blur(28px);
     box-shadow: 0 10px 35px rgba(15, 23, 42, 0.05);
     transition: background 0.35s ease, border-color 0.35s ease;
+    flex-wrap: nowrap;
 }
 
 body.theme-night .topbar {
@@ -178,27 +183,73 @@ body.theme-night .topbar {
 }
 
 .topbar-left {
-    flex: 1;
+    flex: 1 1 320px;
+    min-width: 240px;
 }
 
 .topbar-right {
     display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    justify-content: flex-end;
-    min-width: 240px;
+    gap: 16px;
+    align-items: stretch;
+    flex-wrap: nowrap;
+    min-width: 360px;
 }
 
 .topbar-chip {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 14px 18px;
+    gap: 4px;
+    padding: 12px 16px;
     border-radius: 22px;
-    background: rgba(255, 255, 255, 0.88);
+    background: rgba(255, 255, 255, 0.92);
     border: 1px solid var(--border);
+    min-width: 0;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+}
+
+.topbar-chip.info-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.info-card--time {
+    flex: 1 1 0;
     min-width: 120px;
-    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.info-card--date {
+    flex: 1.5 1 0;
+    min-width: 180px;
+}
+
+.info-card--weather {
+    flex: 1 1 160px;
+    max-width: 220px;
+}
+
+.info-card--weather span:last-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.weekday-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 2px 8px;
+    background: rgba(203, 213, 225, 0.35);
+    color: var(--text-main);
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+body.theme-night .weekday-label {
+    background: rgba(255, 255, 255, 0.08);
 }
 
 body.theme-night .topbar-chip {
@@ -206,16 +257,39 @@ body.theme-night .topbar-chip {
 }
 
 .chip-label {
-    font-size: 10px;
+    font-size: 11px;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.12em;
+    font-weight: 400;
+}
+
+.date-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
 }
 
 .topbar-chip span:last-child {
-    font-size: 14px;
+    font-size: 18px;
     color: var(--text-main);
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.weekday-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 2px 8px;
+    background: rgba(203, 213, 225, 0.35);
+    color: var(--text-main);
+    font-size: 12px;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 input {
@@ -356,13 +430,18 @@ body.theme-night .item-card {
 }
 
 .action-btn {
-    padding: 10px 12px;
+    padding: 8px 12px;
     border-radius: 999px;
     border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.72);
+    background: rgba(255, 255, 255, 0.88);
     color: var(--text-muted);
     font-size: 13px;
-    transition: all 0.24s ease;
+    transition: transform 0.24s ease, background 0.24s ease, color 0.24s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 1);
 }
 
 body.theme-night .action-btn {
@@ -383,13 +462,15 @@ body.theme-night .action-btn:hover {
 }
 
 .link-entry {
-    color: var(--accent);
+    color: var(--text-muted);
     font-weight: 600;
     cursor: pointer;
+    text-decoration: underline;
+    transition: color 0.24s ease;
 }
 
 .link-entry:hover {
-    text-decoration: underline;
+    color: var(--accent);
 }
 
 .settings-modal {

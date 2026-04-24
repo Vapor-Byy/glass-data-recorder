@@ -30,17 +30,20 @@
                     <input id="inputBox" placeholder="输入任务 / 想法 / 链接，回车保存">
                 </div>
                 <div class="topbar-right">
-                    <div class="topbar-chip">
+                    <div class="topbar-chip info-card info-card--time">
                         <span class="chip-label">当前时间</span>
-                        <span id="clockTime">--:--</span>
+                        <span id="clockTime">--:--:--</span>
                     </div>
-                    <div class="topbar-chip">
+                    <div class="topbar-chip info-card info-card--date">
                         <span class="chip-label">今日日期</span>
-                        <span id="clockDate">----年--月--日</span>
+                        <div class="date-value">
+                            <span id="clockDate">----年--月--日</span>
+                            <span class="weekday-label" id="weekdayLabel">-</span>
+                        </div>
                     </div>
-                    <div class="topbar-chip">
+                    <div class="topbar-chip info-card info-card--weather">
                         <span class="chip-label">天气</span>
-                        <span id="weatherText">多云 18°C</span>
+                        <span id="weatherText">☁️ 多云 18°C</span>
                     </div>
                 </div>
             </div>
