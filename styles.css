@@ -8,6 +8,8 @@
     color-scheme: light;
     --bg-start: #f5f5f7;
     --bg-end: #e5e7eb;
+    --bg-overlay1: rgba(255, 255, 255, 0.35);
+    --bg-overlay2: rgba(59, 130, 246, 0.16);
     --surface: rgba(255, 255, 255, 0.88);
     --surface-strong: rgba(255, 255, 255, 0.96);
     --border: rgba(0, 0, 0, 0.06);
@@ -21,6 +23,8 @@
 body.theme-night {
     --bg-start: #231f3d;
     --bg-end: #14111f;
+    --bg-overlay1: rgba(255, 255, 255, 0.12);
+    --bg-overlay2: rgba(59, 130, 246, 0.08);
     --surface: rgba(20, 17, 33, 0.82);
     --surface-strong: rgba(23, 19, 38, 0.94);
     --border: rgba(255, 255, 255, 0.08);
@@ -35,13 +39,30 @@ body {
     margin: 0;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     color: var(--text-main);
-    background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+    background: radial-gradient(circle at 20% 20%, var(--bg-overlay1), transparent 20%),
+                radial-gradient(circle at 80% 15%, var(--bg-overlay2), transparent 25%),
+                linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+    background-attachment: fixed;
+    background-size: 180% 180%;
+    animation: bgShift 18s ease infinite alternate;
     min-height: 100vh;
     transition: background 0.35s ease, color 0.35s ease;
 }
 
 html, body {
     min-height: 100%;
+}
+
+@keyframes bgShift {
+    0% {
+        background-position: 0% 0%, 100% 0%, 0% 0%;
+    }
+    50% {
+        background-position: 10% 10%, 90% 20%, 0% 0%;
+    }
+    100% {
+        background-position: 0% 20%, 100% 10%, 0% 0%;
+    }
 }
 
 body {
@@ -73,9 +94,11 @@ body.theme-night .sidebar {
 .sidebar-top {
     margin-bottom: 26px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: 58px;
+    gap: 12px;
+    min-height: 88px;
 }
 
 .sidebar h2 {
@@ -189,63 +212,88 @@ body.theme-night .topbar {
 
 .topbar-right {
     display: flex;
-    gap: 16px;
-    align-items: stretch;
-    flex-wrap: nowrap;
-    min-width: 360px;
+    justify-content: flex-end;
+    align-items: center;
+    min-width: 0;
 }
 
-.topbar-chip {
+.info-bar {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    padding: 14px 18px;
+    border-radius: 24px;
+    background: rgba(248, 250, 252, 0.92);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    min-width: 0;
+}
+
+body.theme-night .info-bar {
+    background: rgba(20, 17, 33, 0.65);
+    border-color: rgba(203, 213, 225, 0.12);
+}
+
+.info-item {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding: 12px 16px;
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.92);
-    border: 1px solid var(--border);
     min-width: 0;
-    box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
 }
 
-.topbar-chip.info-card {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-}
-
-.info-card--time {
+.info-item--time {
     flex: 1 1 0;
-    min-width: 120px;
 }
 
-.info-card--date {
+.info-item--date {
     flex: 1.5 1 0;
-    min-width: 180px;
 }
 
-.info-card--weather {
-    flex: 1 1 160px;
-    max-width: 220px;
+.info-item--weather {
+    flex: 1 1 0;
 }
 
-.info-card--weather span:last-child {
+.date-row {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+    white-space: nowrap;
 }
 
-.weekday-label {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    padding: 2px 8px;
-    background: rgba(203, 213, 225, 0.35);
-    color: var(--text-main);
-    font-size: 12px;
-    font-weight: 600;
-    margin-left: 8px;
+.info-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 400;
+    line-height: 1.2;
+}
+
+#clockTime,
+#clockDate,
+#weatherText {
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+#clockTime {
+    font-size: 19px;
+}
+
+#clockDate {
+    font-size: 15px;
+}
+
+.weekday-suffix {
+    font-size: 13px;
+    font-weight: 400;
+    color: rgba(107, 114, 128, 0.72);
+    margin-left: 6px;
+}
+
+.info-item--weather #weatherText {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
 }
 
 body.theme-night .weekday-label {
@@ -264,31 +312,11 @@ body.theme-night .topbar-chip {
     font-weight: 400;
 }
 
-.date-value {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
-}
-
 .topbar-chip span:last-child {
     font-size: 18px;
     color: var(--text-main);
     font-weight: 700;
     line-height: 1.2;
-    white-space: nowrap;
-}
-
-.weekday-label {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    padding: 2px 8px;
-    background: rgba(203, 213, 225, 0.35);
-    color: var(--text-main);
-    font-size: 12px;
-    font-weight: 600;
     white-space: nowrap;
 }
 
@@ -330,6 +358,264 @@ input:focus {
     color: var(--text-main);
 }
 
+.memo-panel {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 18px;
+    padding: 24px 28px 0;
+}
+
+.memo-sidebar,
+.memo-details {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 28px;
+    box-shadow: var(--card-shadow);
+    padding: 20px;
+    min-height: 320px;
+}
+
+.memo-sidebar-header,
+.memo-details-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.memo-sidebar-header h4,
+.memo-details-header .info-label {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.memo-sidebar-header .action-btn,
+.memo-details-header .action-btn {
+    padding: 8px 14px;
+    font-size: 13px;
+}
+
+.project-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.project-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+body.theme-night .project-card {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.project-card.active {
+    border-color: rgba(59, 130, 246, 0.35);
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.12);
+}
+
+.project-summary {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.project-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.project-meta {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.project-color {
+    width: 12px;
+    height: 32px;
+    border-radius: 999px;
+    flex-shrink: 0;
+}
+
+.project-controls {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.tiny-btn,
+.delete-btn {
+    border: 1px solid transparent;
+    background: rgba(255, 255, 255, 0.88);
+    color: var(--text-main);
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.tiny-btn:hover,
+.delete-btn:hover {
+    background: rgba(255, 255, 255, 1);
+    transform: translateY(-1px);
+}
+
+body.theme-night .tiny-btn,
+body.theme-night .delete-btn {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+body.theme-night .tiny-btn:hover,
+body.theme-night .delete-btn:hover {
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.memo-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.memo-card {
+    display: grid;
+    gap: 12px;
+    padding: 18px;
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+body.theme-night .memo-card {
+    background: rgba(24, 20, 48, 0.88);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.memo-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.memo-title {
+    flex: 1;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--text-main);
+    font-size: 15px;
+}
+
+body.theme-night .memo-title {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.memo-priority {
+    width: 108px;
+    padding: 10px 12px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--text-main);
+}
+
+body.theme-night .memo-priority {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.memo-content {
+    min-height: 100px;
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--text-main);
+    resize: vertical;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+body.theme-night .memo-content {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.memo-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.memo-status,
+.memo-delete {
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.88);
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+body.theme-night .memo-status,
+body.theme-night .memo-delete {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.memo-status.active {
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #15803d;
+}
+
+.memo-status.done {
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #1d4ed8;
+}
+
+.memo-status.paused {
+    border-color: rgba(234, 179, 8, 0.3);
+    color: #b45309;
+}
+
+.memo-date {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.memo-placeholder {
+    padding: 32px;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--text-muted);
+    text-align: center;
+}
+
+body.theme-night .memo-placeholder {
+    background: rgba(255, 255, 255, 0.06);
+}
+
 .dashboard-card h4 {
     margin: 0 0 8px;
     font-size: 13px;
@@ -337,6 +623,25 @@ input:focus {
     letter-spacing: 0.08em;
     color: var(--text-muted);
     text-transform: uppercase;
+}
+
+.dashboard-link-item {
+    margin-bottom: 10px;
+}
+
+.dashboard-link-item:last-child {
+    margin-bottom: 0;
+}
+
+.dashboard-link-item a {
+    color: var(--accent);
+    text-decoration: underline;
+    font-weight: 600;
+    transition: color 0.24s ease;
+}
+
+.dashboard-link-item a:hover {
+    color: #2563eb;
 }
 
 .dashboard-card p,

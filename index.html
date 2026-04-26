@@ -12,15 +12,13 @@
         <div class="sidebar">
             <div class="sidebar-top">
                 <h2 id="appTitle">Vapor导航</h2>
+                <button type="button" id="themeToggle" class="theme-toggle-btn" aria-label="切换主题">🌙</button>
             </div>
             <nav class="menu">
-                <div class="menu-item active" data-view="all">全部</div>
+                <div class="menu-item active" data-view="all">首页</div>
                 <div class="menu-item" data-view="tasks">任务</div>
                 <div class="menu-item" data-view="links">链接</div>
             </nav>
-            <div class="sidebar-footer">
-                <button type="button" id="themeToggle" class="theme-toggle-btn" aria-label="切换主题">🌙</button>
-            </div>
         </div>
 
         <!-- 主区域 -->
@@ -30,20 +28,22 @@
                     <input id="inputBox" placeholder="输入任务 / 想法 / 链接，回车保存">
                 </div>
                 <div class="topbar-right">
-                    <div class="topbar-chip info-card info-card--time">
-                        <span class="chip-label">当前时间</span>
-                        <span id="clockTime">--:--:--</span>
-                    </div>
-                    <div class="topbar-chip info-card info-card--date">
-                        <span class="chip-label">今日日期</span>
-                        <div class="date-value">
-                            <span id="clockDate">----年--月--日</span>
-                            <span class="weekday-label" id="weekdayLabel">-</span>
+                    <div class="info-bar">
+                        <div class="info-item info-item--time">
+                            <span class="info-label">当前时间</span>
+                            <span id="clockTime">--:--:--</span>
                         </div>
-                    </div>
-                    <div class="topbar-chip info-card info-card--weather">
-                        <span class="chip-label">天气</span>
-                        <span id="weatherText">☁️ 多云 18°C</span>
+                        <div class="info-item info-item--date">
+                            <span class="info-label">今日日期</span>
+                            <div class="date-row">
+                                <span id="clockDate">----年--月--日</span>
+                                <span class="weekday-suffix" id="weekdayLabel">-</span>
+                            </div>
+                        </div>
+                        <div class="info-item info-item--weather">
+                            <span class="info-label">天气</span>
+                            <span id="weatherText">☁️ 多云 18°C</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -63,6 +63,25 @@
                 <div class="dashboard-card">
                     <h4>快捷操作</h4>
                     <button type="button" id="quickAdd" class="action-btn">聚焦输入</button>
+                </div>
+            </div>
+            <div class="memo-panel" id="memoPanel">
+                <div class="memo-sidebar">
+                    <div class="memo-sidebar-header">
+                        <h4>项目分类</h4>
+                        <button type="button" id="addProjectBtn" class="action-btn">新建项目</button>
+                    </div>
+                    <div id="projectList" class="project-list"></div>
+                </div>
+                <div class="memo-details">
+                    <div class="memo-details-header">
+                        <div>
+                            <p class="info-label">当前项目</p>
+                            <h3 id="selectedProjectName">请选择项目</h3>
+                        </div>
+                        <button type="button" id="addMemoBtn" class="action-btn">新增备忘录</button>
+                    </div>
+                    <div id="memoList" class="memo-list"></div>
                 </div>
             </div>
             <div class="content" id="contentPanel">

@@ -9,10 +9,17 @@ const quickAddButton = document.getElementById('quickAdd');
 const tasksColumn = document.getElementById('tasksColumn');
 const linksColumn = document.getElementById('linksColumn');
 const themeToggle = document.getElementById('themeToggle');
+const projectList = document.getElementById('projectList');
+const addProjectBtn = document.getElementById('addProjectBtn');
+const addMemoBtn = document.getElementById('addMemoBtn');
+const memoList = document.getElementById('memoList');
+const selectedProjectName = document.getElementById('selectedProjectName');
 
 let data = [];
 let dragIndex = null;
 let currentView = 'all';
+let projects = [];
+let selectedProjectId = null;
 
 const appTitle = document.getElementById('appTitle');
 const settingsModal = document.getElementById('settingsModal');
@@ -106,6 +113,313 @@ function saveData() {
     localStorage.setItem('workbench', JSON.stringify(data));
 }
 
+function getLinkHref(text) {
+    return text.match(/^https?:\/\//i) ? text : `https://${text}`;
+}
+
+function generateId() {
+    return `id-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`;
+}
+
+function loadProjects() {
+    try {
+        const stored = localStorage.getItem('memoProjects');
+        projects = stored ? JSON.parse(stored) : [];
+        if (!Array.isArray(projects)) projects = [];
+    } catch (error) {
+        projects = [];
+    }
+    if (!selectedProjectId && projects.length) {
+        selectedProjectId = projects[0].id;
+    }
+}
+
+function saveProjects() {
+    localStorage.setItem('memoProjects', JSON.stringify(projects));
+}
+
+function getSelectedProject() {
+    let project = projects.find((item) => item.id === selectedProjectId);
+    if (!project) {
+        project = projects[0] || null;
+        selectedProjectId = project ? project.id : null;
+    }
+    return project;
+}
+
+function createProject(title) {
+    const index = projects.length;
+    const colorPalette = ['#7C3AED', '#0EA5E9', '#F97316', '#14B8A6', '#EC4899'];
+    const project = {
+        id: generateId(),
+        title: title || `新项目 ${index + 1}`,
+        color: colorPalette[index % colorPalette.length],
+        order: index,
+        memos: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+    };
+    projects.push(project);
+    selectedProjectId = project.id;
+    saveProjects();
+    renderProjects();
+    renderMemos();
+}
+
+function selectProject(id) {
+    selectedProjectId = id;
+    saveProjects();
+    renderProjects();
+    renderMemos();
+}
+
+function moveProject(id, direction) {
+    const index = projects.findIndex((item) => item.id === id);
+    if (index < 0) return;
+    const target = index + direction;
+    if (target < 0 || target >= projects.length) return;
+    [projects[index], projects[target]] = [projects[target], projects[index]];
+    projects.forEach((project, idx) => {
+        project.order = idx;
+    });
+    saveProjects();
+    renderProjects();
+}
+
+function removeProject(id) {
+    const projectIndex = projects.findIndex((item) => item.id === id);
+    if (projectIndex === -1) return;
+    if (!confirm('确认删除此项目及其备忘录？')) return;
+    projects.splice(projectIndex, 1);
+    if (selectedProjectId === id) {
+        selectedProjectId = projects[0] ? projects[0].id : null;
+    }
+    saveProjects();
+    renderProjects();
+    renderMemos();
+}
+
+function addMemoToProject() {
+    const project = getSelectedProject();
+    if (!project) {
+        alert('请先创建一个项目');
+        return;
+    }
+    const memo = {
+        id: generateId(),
+        title: '新备忘录',
+        content: '',
+        status: 'active',
+        priority: 'medium',
+        updatedAt: new Date().toISOString(),
+    };
+    project.memos.unshift(memo);
+    project.updatedAt = new Date().toISOString();
+    saveProjects();
+    renderMemos();
+    renderProjects();
+}
+
+function updateProjectTitle(id, title) {
+    const project = projects.find((item) => item.id === id);
+    if (!project) return;
+    project.title = title || project.title;
+    project.updatedAt = new Date().toISOString();
+    saveProjects();
+    renderProjects();
+}
+
+function updateMemo(project, memo) {
+    memo.updatedAt = new Date().toISOString();
+    project.updatedAt = new Date().toISOString();
+    saveProjects();
+    renderProjects();
+}
+
+function deleteMemo(project, memoId) {
+    project.memos = project.memos.filter((memo) => memo.id !== memoId);
+    project.updatedAt = new Date().toISOString();
+    saveProjects();
+    renderMemos();
+    renderProjects();
+}
+
+function renderProjects() {
+    projectList.innerHTML = '';
+    if (!projects.length) {
+        projectList.innerHTML = '<div class="memo-placeholder">暂无项目，点击“新建项目”快速开始。</div>';
+        selectedProjectName.textContent = '请选择项目';
+        return;
+    }
+    const sorted = [...projects].sort((a, b) => a.order - b.order);
+    sorted.forEach((project) => {
+        const card = document.createElement('div');
+        card.className = `project-card${project.id === selectedProjectId ? ' active' : ''}`;
+        card.addEventListener('click', () => selectProject(project.id));
+
+        const summary = document.createElement('div');
+        summary.className = 'project-summary';
+
+        const title = document.createElement('div');
+        title.className = 'project-title';
+        title.textContent = project.title;
+        title.addEventListener('dblclick', (event) => {
+            event.stopPropagation();
+            const name = prompt('重命名项目', project.title);
+            if (name) updateProjectTitle(project.id, name.trim());
+        });
+
+        const meta = document.createElement('div');
+        meta.className = 'project-meta';
+        meta.textContent = `${project.memos.length} 条备忘录`;
+
+        summary.appendChild(title);
+        summary.appendChild(meta);
+
+        const colorDot = document.createElement('span');
+        colorDot.className = 'project-color';
+        colorDot.style.background = project.color;
+
+        const controls = document.createElement('div');
+        controls.className = 'project-controls';
+
+        const upButton = document.createElement('button');
+        upButton.type = 'button';
+        upButton.className = 'tiny-btn';
+        upButton.textContent = '↑';
+        upButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            moveProject(project.id, -1);
+        });
+
+        const downButton = document.createElement('button');
+        downButton.type = 'button';
+        downButton.className = 'tiny-btn';
+        downButton.textContent = '↓';
+        downButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            moveProject(project.id, 1);
+        });
+
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'tiny-btn delete-btn';
+        deleteButton.textContent = '×';
+        deleteButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            removeProject(project.id);
+        });
+
+        controls.appendChild(upButton);
+        controls.appendChild(downButton);
+        controls.appendChild(deleteButton);
+
+        card.appendChild(colorDot);
+        card.appendChild(summary);
+        card.appendChild(controls);
+        projectList.appendChild(card);
+    });
+}
+
+function renderMemos() {
+    const project = getSelectedProject();
+    memoList.innerHTML = '';
+    if (!project) {
+        selectedProjectName.textContent = '请选择项目';
+        memoList.innerHTML = '<div class="memo-placeholder">当前没有可用项目，请先创建一个项目。</div>';
+        return;
+    }
+    selectedProjectName.textContent = project.title;
+    if (!project.memos.length) {
+        memoList.innerHTML = '<div class="memo-placeholder">项目为空，点击“新增备忘录”快速记录。</div>';
+        return;
+    }
+
+    project.memos.forEach((memo) => {
+        const card = document.createElement('div');
+        card.className = 'memo-card';
+
+        const topRow = document.createElement('div');
+        topRow.className = 'memo-card-top';
+
+        const titleInput = document.createElement('input');
+        titleInput.className = 'memo-title';
+        titleInput.value = memo.title;
+        titleInput.placeholder = '备忘录标题';
+        titleInput.addEventListener('input', () => {
+            memo.title = titleInput.value;
+            updateMemo(project, memo);
+        });
+
+        const prioritySelect = document.createElement('select');
+        prioritySelect.className = 'memo-priority';
+        ['low', 'medium', 'high'].forEach((level) => {
+            const option = document.createElement('option');
+            option.value = level;
+            option.textContent = level === 'low' ? '低' : level === 'medium' ? '中' : '高';
+            option.selected = memo.priority === level;
+            prioritySelect.appendChild(option);
+        });
+        prioritySelect.addEventListener('change', () => {
+            memo.priority = prioritySelect.value;
+            updateMemo(project, memo);
+        });
+
+        topRow.appendChild(titleInput);
+        topRow.appendChild(prioritySelect);
+
+        const contentArea = document.createElement('textarea');
+        contentArea.className = 'memo-content';
+        contentArea.value = memo.content;
+        contentArea.placeholder = '输入备忘录内容...';
+        contentArea.addEventListener('input', () => {
+            memo.content = contentArea.value;
+            updateMemo(project, memo);
+        });
+
+        const metaRow = document.createElement('div');
+        metaRow.className = 'memo-meta';
+
+        const statusButton = document.createElement('button');
+        statusButton.type = 'button';
+        statusButton.className = `memo-status ${memo.status}`;
+        statusButton.textContent = memo.status === 'done' ? '已完成' : memo.status === 'paused' ? '挂起' : '进行中';
+        statusButton.addEventListener('click', () => {
+            const next = memo.status === 'active' ? 'done' : memo.status === 'done' ? 'paused' : 'active';
+            memo.status = next;
+            statusButton.className = `memo-status ${next}`;
+            statusButton.textContent = next === 'done' ? '已完成' : next === 'paused' ? '挂起' : '进行中';
+            updateMemo(project, memo);
+        });
+
+        const rightMeta = document.createElement('div');
+        rightMeta.style.display = 'flex';
+        rightMeta.style.alignItems = 'center';
+        rightMeta.style.gap = '12px';
+
+        const dateLabel = document.createElement('span');
+        dateLabel.className = 'memo-date';
+        dateLabel.textContent = `更新于 ${new Date(memo.updatedAt).toLocaleString()}`;
+
+        const deleteMemoButton = document.createElement('button');
+        deleteMemoButton.type = 'button';
+        deleteMemoButton.className = 'memo-delete';
+        deleteMemoButton.textContent = '删除';
+        deleteMemoButton.addEventListener('click', () => deleteMemo(project, memo.id));
+
+        rightMeta.appendChild(dateLabel);
+        rightMeta.appendChild(deleteMemoButton);
+
+        metaRow.appendChild(statusButton);
+        metaRow.appendChild(rightMeta);
+
+        card.appendChild(topRow);
+        card.appendChild(contentArea);
+        card.appendChild(metaRow);
+        memoList.appendChild(card);
+    });
+}
+
 function isLink(text) {
     try {
         const regex = new RegExp(settings.linkPattern, 'i');
@@ -129,6 +443,7 @@ function getType(text) {
 }
 
 const contentPanel = document.getElementById('contentPanel');
+const memoPanel = document.getElementById('memoPanel');
 
 function updateView() {
     const menuItems = document.querySelectorAll('.menu-item');
@@ -139,6 +454,7 @@ function updateView() {
     dashboardPanel.classList.toggle('hidden', currentView !== 'all');
     tasksColumn.classList.toggle('hidden', currentView === 'links');
     linksColumn.classList.toggle('hidden', currentView === 'tasks');
+    memoPanel.classList.toggle('hidden', currentView === 'links');
     contentPanel.classList.toggle('single-column', currentView !== 'all');
 }
 
@@ -157,7 +473,12 @@ function renderDashboard() {
 
     const links = data.filter((item) => item.type === 'link').slice(0, 3);
     if (links.length) {
-        dashboardLinks.innerHTML = links.map((item) => `<div>${item.text}</div>`).join('');
+        dashboardLinks.innerHTML = links
+            .map((item) => {
+                const href = getLinkHref(item.text);
+                return `<div class="dashboard-link-item"><a href="${href}" target="_blank" rel="noopener noreferrer">${item.text}</a></div>`;
+            })
+            .join('');
     } else {
         dashboardLinks.textContent = '暂无快捷入口';
     }
@@ -267,6 +588,8 @@ function render() {
     linkList.innerHTML = '';
     renderDashboard();
     updateView();
+    renderProjects();
+    renderMemos();
 
     let items = data.map((item, index) => ({ item, index }));
     if (settings.autoSort) {
@@ -345,6 +668,17 @@ quickAddButton.addEventListener('click', () => {
     input.focus();
 });
 
+addProjectBtn.addEventListener('click', () => {
+    const title = prompt('请输入项目名称', '新项目');
+    if (title && title.trim()) {
+        createProject(title.trim());
+    }
+});
+
+addMemoBtn.addEventListener('click', () => {
+    addMemoToProject();
+});
+
 clearDataBtn.addEventListener('click', () => {
     if (confirm('确认清空本地数据？')) {
         data = [];
@@ -385,6 +719,7 @@ autoSortToggle.addEventListener('change', () => {
 loadSettings();
 applyTheme();
 loadData();
+loadProjects();
 updateSettingsUI();
 updateTopbarClock();
 setInterval(updateTopbarClock, 1000);
