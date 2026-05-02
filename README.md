@@ -1,137 +1,217 @@
-# Glass Data Recorder
+# Vapor Notes
 
-一个简单的浏览器端数据记录器，支持任务、记录和链接的快速输入与管理。
+Vapor Notes 是一个跨端统一的备忘录系统，只保留两类核心记录：
+
+- 临时待办：快速记录短期事项，即写即用。
+- 长期待办：按项目组织长期事项，每个项目下包含多条备忘录。
+
+系统由同一个 Git 仓库维护，包含 Web 端与微信小程序端，数据统一存储在微信云开发。
+
+## 删除冗余功能清单
+
+已删除或停用的功能：
+
+- 链接识别、快捷链接、外部访问按钮。
+- 外部内容聚合入口。
+- 云端任务记录、完成状态统计、任务/链接混合分类。
+- `title`、`url`、`done`、`priority`、`source`、`is_pinned` 等历史冗余写入字段。
+- 本地孤岛数据和 `localStorage` 业务存储。
+- 多项目副本和根目录旧 Web 入口。
+
+处理步骤：
+
+1. `notes` 写入逻辑改为统一字段：`content/type/project_id/created_at/updated_at`。
+2. 新增 `projects` 集合承载长期待办项目。
+3. 小程序与 Web 都改为 `notesService` 数据层。
+4. UI 只保留临时待办、长期项目、搜索、新增、删除。
+5. 历史旧字段不再被新代码写入或依赖，后续可在云数据库控制台批量清理。
+
+## 功能结构
+
+临时待办：
+
+- 快速新增。
+- 列表展示。
+- 删除。
+- 搜索内容。
+
+长期待办：
+
+- 创建项目。
+- 选择项目。
+- 在项目内新增备忘录。
+- 项目内列表展示。
+- 删除项目内备忘录。
+- 搜索内容。
+
+所有操作围绕最少路径设计，不做复杂层级、标签、模板或外部聚合。
+
+## 数据模型
+
+### notes 集合
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `_id` | string | 云数据库自动生成唯一 ID |
+| `content` | string | 备忘录内容 |
+| `type` | string | `temporary` 或 `longterm` |
+| `project_id` | string | 长期待办所属项目，临时待办为空字符串 |
+| `created_at` | string | ISO 创建时间 |
+| `updated_at` | string | ISO 更新时间 |
+
+### projects 集合
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `_id` | string | 云数据库自动生成唯一 ID |
+| `name` | string | 项目名称 |
+| `created_at` | string | ISO 创建时间 |
+
+## 项目结构
+
+```text
+glass-data-recorder/
+├── miniprogram/              # 微信小程序端
+│   ├── app.js
+│   ├── app.json
+│   ├── project.config.json
+│   └── pages/index/
+├── web/                      # Web 端
+│   ├── index.html
+│   ├── app.js
+│   └── styles.css
+├── cloudfunctions/           # 云函数预留
+├── package.json
+├── .gitignore
+└── README.md
+```
+
+## 小程序与 Web 重构方案
+
+小程序端：
+
+- `miniprogram/pages/index/index.js` 封装 `notesService`。
+- 同时监听 `notes` 与 `projects` 两个集合。
+- 用 `mode` 切换临时待办与长期待办。
+- 长期待办必须先选中项目，再新增内容。
+
+Web 端：
+
+- `web/app.js` 封装同名 `notesService`。
+- 页面结构与小程序一致：模式切换、搜索、统计、临时列表、项目列表、长期列表。
+- 通过轮询实现准实时同步。
+
+## 数据同步逻辑
+
+统一数据流：
+
+```text
+Web / 小程序
+  -> notesService.createNote / createProject / removeNote
+  -> 微信云开发 notes / projects
+  -> 小程序 watch 实时监听
+  -> Web 轮询准实时同步
+```
+
+小程序：
+
+- `notes` 集合使用 `watch`。
+- `projects` 集合使用 `watch`。
+- 任意集合监听失败后，3 秒后重新加载并重建监听。
+
+Web：
+
+- `refreshAll()` 同时读取 `notes` 与 `projects`。
+- 每 4 秒轮询一次。
+- 新增、删除后立即刷新一次。
+
+## 核心代码示例
+
+新增临时待办：
+
+```js
+notesService.createNote(content, 'temporary', '');
+```
+
+新建长期项目：
+
+```js
+db.collection('projects').add({
+  data: {
+    name,
+    created_at: new Date().toISOString(),
+  },
+});
+```
+
+新增项目内备忘录：
+
+```js
+notesService.createNote(content, 'longterm', selectedProjectId);
+```
+
+统一写入模型：
+
+```js
+{
+  content,
+  type,
+  project_id: projectId || '',
+  created_at: now,
+  updated_at: now
+}
+```
 
 ## 运行方式
 
-1. 直接打开 `index.html`。
-2. 或者使用本地开发服务器：
+Web：
 
 ```bash
 npm install
 npm start
 ```
 
-## 功能
+小程序：
 
-- 输入任务、记录或链接并按回车保存
-- 本地 `localStorage` 持久化数据
-- 任务和链接过滤
-- 拖拽排序
-- 删除和完成标记
-
-## 跨端同步备忘录系统
-
-本仓库新增一个基于微信云开发 `notes` 集合的跨端同步备忘录系统，包含：
-
-- `miniprogram/`：微信小程序原生端
-- `web/`：纯 HTML + JavaScript Web 端
-- `cloudfunctions/`：云函数扩展目录（当前为占位说明）
-
-### 特性
-
-- 多端共用同一云数据库 `notes` 集合
-- 字段结构统一：`_id`、`content`、`created_at`、`updated_at`
-- 小程序端使用 `watch` 实现实时监听
-- Web 端通过云开发 JS SDK 读取/写入同一集合
-
-### 运行方式
-
-#### 小程序端
-
-1. 在微信开发者工具中导入 `miniprogram/` 目录。
-2. 在“云开发”面板中创建环境，并复制环境 ID。
-3. `app.js` 中已配置 `wx.cloud.init({ env: 'auto' })`，可直接使用该项目环境。
-4. 运行小程序后即可新增、查看、删除备忘录。
-
-#### Web 端
-
-1. 打开 `web/index.html`。
-2. 或者使用本地服务器：
-   ```bash
-   npm start
-   ```
-3. 将 `web/app.js` 中的 `CLOUD_ENV` 替换为你的微信云开发环境 ID。
-4. 页面加载后点击“刷新列表”读取云数据库数据。
-
-### 数据同步说明
-
-- 核心同步方式：小程序端与 Web 端不直接通信，所有数据均由同一云数据库 `notes` 集合提供。
-- 小程序端：通过 `wx.cloud.database().collection('notes').watch()` 实时监听数据库变化，收到更新后立即刷新界面。
-- Web 端：当前实现使用刷新查询最新数据；后续可在 `web/app.js` 中使用 `setInterval(refreshNotes, intervalMs)` 轮询同步或接入更高级的实时监听机制。
-- `updated_at` 字段：用于后续版本控制和冲突预留。当前写入和删除均依赖数据库最新状态。
-
-## 系统整体架构说明
-
-1. 用户在小程序或 Web 端发起新增 / 删除 操作。
-2. 客户端调用云数据库 API，将数据写入同一集合 `notes`。
-3. 小程序端通过 `watch` 监听集合的实时变更，并同步更新本地显示。
-4. Web 端通过定时刷新或手动刷新读取同一集合最新文档。
-5. 所有端共享同一套字段结构，保证数据统一。
-
-### 数据流转逻辑
-
-- 新增备忘录：客户端 -> 云数据库 `notes` -> 读取并展示
-- 查看列表：客户端从同一云数据库 `notes` 读取最新文档
-- 删除备忘录：客户端删除 `notes` 中对应 `_id` 文档 -> 其它端可重新查询或监听到变化
-
-## 数据库结构设计
-
-集合名称：`notes`
-
-字段说明：
-
-- `_id`：微信云数据库自动生成的唯一文档 ID
-- `content`：备忘录文本内容，字符串
-- `created_at`：记录创建时间，ISO 时间字符串
-- `updated_at`：记录最后更新时间，ISO 时间字符串，用于后续冲突检测
-
-当前设计仅保留最小闭环功能，不包含标签、分类、富文本等扩展字段。
-
-## 从零到上线部署步骤
-
-### 1. 微信云开发环境配置
-
-1. 打开微信开发者工具。
-2. 新建或导入项目，选择 `miniprogram/` 目录作为项目根目录。
-3. 在“云开发”面板中启用云能力，创建一个新的环境或使用现有环境。
-4. 在云开发控制台中进入“数据库”，新建集合名称 `notes`（如无需手动新建，也可通过客户端首次写入自动创建）。
-5. 确保数据库权限策略允许小程序端和 Web 端读取、写入该集合。开发阶段可设置为“所有用户可读写”，上线时根据业务规则调整。
-
-### 2. 小程序端运行方法
-
-1. 在微信开发者工具中导入 `miniprogram/`。
-2. 确认 `app.js` 中使用了 `wx.cloud.init({ env: 'auto' })`。
-3. 在“云开发”面板中选择对应环境，点击“编译”或“预览”。
-4. 在页面中输入备忘录内容，点击“新增”，即可写入云数据库。
-5. 删除备忘录后，`watch` 会触发更新，列表会自动刷新。
-
-### 3. Web 端运行方法
-
-1. 打开 `web/index.html`，或使用本地服务器访问该文件。
-2. 如果需要使用本地服务器，在仓库根目录运行：
-
-```bash
-npm install
-npm start
+```text
+微信开发者工具导入：
+/Users/xupengfei/Documents/glass-data-recorder/miniprogram
 ```
 
-3. 在 `web/app.js` 中把 `CLOUD_ENV = 'YOUR_CLOUD_ENV_ID'` 替换为你微信云开发环境的实际 ID。
-4. 打开 Web 页面后，点击“刷新列表”读取云端当前数据。
-5. 新增、删除操作会同步更新云数据库，Web 端可再次刷新查看最新结果。
+云环境 ID：
 
-### 4. 验证同步能力
+```js
+const CLOUD_ENV = 'cloud1-d8gzx0xvwbed1f1f4';
+```
 
-- 在小程序端新增一条备忘录，确认 Web 端刷新后显示同一条数据。
-- 在 Web 端删除一条备忘录，确认小程序端的 `watch` 监听到变化并自动更新列表。
-- 通过多端访问同一集合，验证数据并非前端互传，而是基于统一数据源。
+小程序 AppID：
 
-## 后续扩展建议
+```json
+"appid": "wx625829c0333a4cb2"
+```
 
-当前系统专注最小闭环同步底座，后续功能可在此基础上叠加：
+## Git 单一数据源
 
-- 新增标签、分类、提醒字段
-- Web 端改造为 Vue3 无构建工具版本
-- 小程序端加入更新编辑功能
-- 引入云函数统一权限与业务规则
-- Web 端增加轮询或基于服务端推送的实时机制
+本项目采用一个本地目录、一个 Git 仓库、一个 GitHub 远程仓库：
+
+```text
+/Users/xupengfei/Documents/glass-data-recorder
+https://github.com/Vapor-Byy/glass-data-recorder.git
+```
+
+VSCode 打开仓库根目录，微信开发者工具导入同一仓库下的 `miniprogram/`。
+
+提交流程：
+
+```bash
+git status
+git add .
+git commit -m "refactor vapor notes focus"
+git push origin main
+```
+
+其他设备同步：
+
+```bash
+git pull origin main
+```

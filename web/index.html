@@ -1,39 +1,78 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>跨端同步备忘录 - Web</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://unpkg.com/@cloudbase/js-sdk@1.7.6/dist/index.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vapor Notes</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://imgcache.qq.com/qcloud/tcbjs/1.10.10/tcb.js"></script>
+  <script>
+    if (!window.tcb) {
+      document.write('<script src="https://unpkg.com/@cloudbase/js-sdk@1.7.6/dist/index.min.js"><\\/script>');
+    }
+  </script>
 </head>
 <body>
-  <div class="container">
-    <header class="header">
-      <h1>跨端同步备忘录</h1>
-      <p>Web 端和小程序端共用同一云数据库 `notes` 集合。</p>
-    </header>
+  <main class="app">
+    <section class="hero glass">
+      <div>
+        <p class="eyebrow">VAPOR NOTES</p>
+        <h1>Vapor Notes</h1>
+        <p class="subtitle">临时待办快速记录，长期待办按项目沉淀。</p>
+      </div>
+      <div class="hero-meta">
+        <button id="themeToggle" class="icon-button" type="button">夜</button>
+        <span id="syncStatus" class="sync-pill">初始化中</span>
+      </div>
+    </section>
 
-    <section class="panel">
+    <section class="mode-switch glass">
+      <button class="mode-button active" type="button" data-mode="temporary">临时待办</button>
+      <button class="mode-button" type="button" data-mode="longterm">长期待办</button>
+    </section>
+
+    <section class="search-card glass">
+      <input id="searchInput" type="search" placeholder="搜索内容">
+    </section>
+
+    <section class="summary">
+      <div class="summary-card glass">
+        <span>临时</span>
+        <strong id="temporaryCount">0</strong>
+      </div>
+      <div class="summary-card glass">
+        <span>长期</span>
+        <strong id="longtermCount">0</strong>
+      </div>
+      <div class="summary-card glass">
+        <span>项目</span>
+        <strong id="projectCount">0</strong>
+      </div>
+    </section>
+
+    <section id="temporaryPanel" class="panel glass">
       <div class="input-row">
-        <textarea id="noteInput" placeholder="输入备忘录内容，点击添加" rows="3"></textarea>
-        <button id="addButton">新增</button>
+        <input id="temporaryInput" type="text" placeholder="快速记一条临时待办">
+        <button id="addTemporaryButton" type="button">新增</button>
       </div>
-      <div class="action-row">
-        <button id="refreshButton">刷新列表</button>
-        <span class="status" id="statusText">初始化中…</span>
-      </div>
+      <div id="temporaryList" class="note-list"></div>
+      <div id="temporaryEmpty" class="empty-state">暂无临时待办。</div>
     </section>
 
-    <section class="panel">
-      <div class="list-header">
-        <h2>备忘录列表</h2>
-        <span id="countText">0 条</span>
+    <section id="longtermPanel" class="panel glass hidden">
+      <div class="input-row">
+        <input id="projectInput" type="text" placeholder="新建长期项目">
+        <button id="addProjectButton" type="button">项目</button>
       </div>
-      <div id="noteList" class="note-list"></div>
-      <div id="emptyState" class="empty-state">暂无备忘录，请先添加一条。</div>
+      <div id="projectList" class="project-list"></div>
+      <div class="input-row">
+        <input id="longtermInput" type="text" placeholder="给当前项目新增备忘录">
+        <button id="addLongtermButton" type="button">新增</button>
+      </div>
+      <div id="longtermList" class="note-list"></div>
+      <div id="longtermEmpty" class="empty-state">当前项目暂无内容。</div>
     </section>
-  </div>
+  </main>
 
   <script src="app.js"></script>
 </body>

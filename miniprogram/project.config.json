@@ -1,12 +1,37 @@
 {
   "miniprogramRoot": "./",
-  "projectname": "cross-end-note-sync",
-  "appid": "tourist",
+  "projectname": "vapor-notes",
+  "appid": "wx625829c0333a4cb2",
   "setting": {
     "urlCheck": false,
     "es6": true,
     "enhance": true,
     "postcss": false,
-    "minified": false
-  }
+    "minified": false,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
+  },
+  "compileType": "miniprogram",
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "editorSetting": {}
 }

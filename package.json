@@ -2,9 +2,10 @@
   "name": "glass-data-recorder",
   "version": "0.1.0",
   "private": true,
-  "description": "A glass-style browser task and link recorder.",
+  "description": "Unified cloud-backed Vapor notes portal and WeChat mini program.",
   "scripts": {
-    "start": "npx live-server --port=5501 --open=index.html"
+    "start": "npm run start:web",
+    "start:web": "npx live-server --port=5501 --open=web/index.html"
   },
   "devDependencies": {
     "live-server": "^1.2.2"

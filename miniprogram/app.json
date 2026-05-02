@@ -3,10 +3,10 @@
     "pages/index/index"
   ],
   "window": {
-    "navigationBarTitleText": "跨端同步备忘录",
-    "navigationBarBackgroundColor": "#1e88e5",
-    "navigationBarTextStyle": "white",
-    "backgroundColor": "#f5f7fb",
+    "navigationBarTitleText": "备忘录",
+    "navigationBarBackgroundColor": "#f5f5f7",
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f5f5f7",
     "backgroundTextStyle": "light"
   },
   "cloud": true

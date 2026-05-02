@@ -1,31 +1,86 @@
 <view class="page">
-  <view class="header">
-    <text class="title">跨端同步备忘录</text>
-    <text class="subtitle">云数据库 notes 集合 + watch 实时同步</text>
+  <view class="hero">
+    <view>
+      <text class="eyebrow">VAPOR NOTES</text>
+      <text class="title">Vapor Notes</text>
+      <text class="subtitle">临时待办快速记录，长期待办按项目沉淀。</text>
+    </view>
+    <view class="sync-pill">{{syncStatus}}</view>
   </view>
 
-  <view class="input-area">
-    <input class="note-input" placeholder="输入备忘录内容，点击添加" value="{{newContent}}" bindinput="onInputChange" confirm-type="done" bindconfirm="onAddNote" />
-    <button class="add-button" bindtap="onAddNote">新增</button>
+  <view class="mode-switch">
+    <view class="mode-item {{mode === 'temporary' ? 'active' : ''}}" data-mode="temporary" bindtap="setMode">临时待办</view>
+    <view class="mode-item {{mode === 'longterm' ? 'active' : ''}}" data-mode="longterm" bindtap="setMode">长期待办</view>
   </view>
 
-  <view class="tips">当前数据源：微信云开发数据库 <text class="highlight">notes</text></view>
-
-  <view class="list-header">
-    <text>备忘录列表</text>
-    <text class="list-count">{{notes.length}} 条</text>
+  <view class="search-card">
+    <input class="search-input" placeholder="搜索内容" value="{{searchText}}" bindinput="onSearchChange" />
   </view>
 
-  <scroll-view class="note-list" scroll-y="true">
-    <block wx:for="{{notes}}" wx:key="_id">
-      <view class="note-card">
-        <view class="note-main">
-          <text class="note-content">{{item.content}}</text>
-          <text class="note-time">{{item.created_at}}</text>
+  <view class="stats-grid">
+    <view class="stat-card">
+      <text class="stat-label">临时</text>
+      <text class="stat-value">{{temporaryCount}}</text>
+    </view>
+    <view class="stat-card">
+      <text class="stat-label">长期</text>
+      <text class="stat-value">{{longtermCount}}</text>
+    </view>
+    <view class="stat-card">
+      <text class="stat-label">项目</text>
+      <text class="stat-value">{{projectCount}}</text>
+    </view>
+  </view>
+
+  <block wx:if="{{mode === 'temporary'}}">
+    <view class="input-card">
+      <input class="note-input" placeholder="快速记一条临时待办" value="{{temporaryInput}}" bindinput="onTemporaryInput" confirm-type="done" bindconfirm="addTemporary" />
+      <button class="add-button" bindtap="addTemporary">新增</button>
+    </view>
+
+    <scroll-view class="note-list" scroll-y="true">
+      <block wx:for="{{temporaryNotes}}" wx:key="_id">
+        <view class="note-card">
+          <view class="note-main">
+            <text class="note-content">{{item.content}}</text>
+            <text class="note-time">{{item.displayTime}}</text>
+          </view>
+          <button class="delete-button" data-id="{{item._id}}" bindtap="deleteNote">删除</button>
         </view>
-        <button class="delete-button" data-id="{{item._id}}" bindtap="onDeleteNote">删除</button>
-      </view>
-    </block>
-    <view wx:if="{{notes.length === 0}}" class="empty-state">暂无备忘录，试试先新增一条。</view>
-  </scroll-view>
+      </block>
+      <view wx:if="{{temporaryNotes.length === 0}}" class="empty-state">暂无临时待办。</view>
+    </scroll-view>
+  </block>
+
+  <block wx:if="{{mode === 'longterm'}}">
+    <view class="input-card">
+      <input class="note-input" placeholder="新建项目" value="{{projectInput}}" bindinput="onProjectInput" confirm-type="done" bindconfirm="addProject" />
+      <button class="add-button" bindtap="addProject">项目</button>
+    </view>
+
+    <scroll-view class="project-list" scroll-x="true">
+      <block wx:for="{{projects}}" wx:key="_id">
+        <view class="project-chip {{selectedProjectId === item._id ? 'active' : ''}}" data-id="{{item._id}}" bindtap="selectProject">{{item.name}}</view>
+      </block>
+    </scroll-view>
+
+    <view class="input-card">
+      <input class="note-input" placeholder="{{selectedProjectId ? '给当前项目新增备忘录' : '请先创建项目'}}" value="{{longtermInput}}" bindinput="onLongtermInput" confirm-type="done" bindconfirm="addLongterm" />
+      <button class="add-button" bindtap="addLongterm">新增</button>
+    </view>
+
+    <scroll-view class="note-list" scroll-y="true">
+      <block wx:for="{{longtermNotes}}" wx:key="_id">
+        <view class="note-card">
+          <view class="note-main">
+            <text class="note-content">{{item.content}}</text>
+            <text class="note-time">{{item.displayTime}}</text>
+          </view>
+          <button class="delete-button" data-id="{{item._id}}" bindtap="deleteNote">删除</button>
+        </view>
+      </block>
+      <view wx:if="{{projects.length === 0}}" class="empty-state">先创建一个长期项目。</view>
+      <view wx:elif="{{longtermNotes.length === 0}}" class="empty-state">当前项目暂无内容。</view>
+    </scroll-view>
+  </block>
 </view>
