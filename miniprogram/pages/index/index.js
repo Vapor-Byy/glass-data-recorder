@@ -2,14 +2,16 @@ const CLOUD_ENV = 'cloud1-d8gzx0xvwbed1f1f4';
 const NOTES = 'notes';
 const PROJECTS = 'projects';
 const db = wx.cloud.database({ env: CLOUD_ENV });
+// 小程序端用 {openid} 占位符，云开发会自动替换为当前用户的 openid
+const OWNER_FILTER = { _openid: db.command.eq('{openid}') };
 
 const notesService = {
   listNotes() {
-    return db.collection(NOTES).orderBy('created_at', 'desc').get();
+    return db.collection(NOTES).where(OWNER_FILTER).orderBy('created_at', 'desc').get();
   },
 
   listProjects() {
-    return db.collection(PROJECTS).orderBy('created_at', 'desc').get();
+    return db.collection(PROJECTS).where(OWNER_FILTER).orderBy('created_at', 'desc').get();
   },
 
   createTemporary(content) {
@@ -45,6 +47,10 @@ const notesService = {
 
   removeNote(id) {
     return db.collection(NOTES).doc(id).remove();
+  },
+
+  removeProject(id) {
+    return db.collection(PROJECTS).doc(id).remove();
   },
 
   toggleComplete(id, completed) {
@@ -268,6 +274,28 @@ Page({
     });
   },
 
+  deleteProject(event) {
+    const id = event.currentTarget.dataset.id;
+    if (!id) return;
+    wx.showModal({
+      title: '删除项目',
+      content: '删除项目后，该项目下的所有备忘录也会一并删除，确认删除？',
+      success: async (res) => {
+        if (!res.confirm) return;
+        try {
+          // 先删除该项目下所有备忘录
+          const { data: notes } = await db.collection(NOTES)
+            .where({ _openid: db.command.eq('{openid}'), project_id: id })
+            .get();
+          await Promise.all(notes.map(n => notesService.removeNote(n._id)));
+          await notesService.removeProject(id);
+        } catch {
+          wx.showToast({ title: '删除失败', icon: 'none' });
+        }
+      },
+    });
+  },
+
   setupWatchers() {
     const retry = () => {
       if (this.retryTimer) clearTimeout(this.retryTimer);
@@ -278,14 +306,14 @@ Page({
       }, 3000);
     };
 
-    this.notesWatcher = db.collection(NOTES).watch({
+    this.notesWatcher = db.collection(NOTES).where(OWNER_FILTER).watch({
       onChange: (snapshot) => {
         this.applyData(snapshot.docs, this.data.projects, '实时同步');
       },
       onError: retry,
     });
 
-    this.projectsWatcher = db.collection(PROJECTS).watch({
+    this.projectsWatcher = db.collection(PROJECTS).where(OWNER_FILTER).watch({
       onChange: (snapshot) => {
         this.applyData(this.data.notes, snapshot.docs, '实时同步');
       },

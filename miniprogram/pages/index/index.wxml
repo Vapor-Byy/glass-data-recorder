@@ -76,7 +76,10 @@
 
     <scroll-view class="project-list" scroll-x="true">
       <block wx:for="{{projects}}" wx:key="_id">
-        <view class="project-chip {{selectedProjectId === item._id ? 'active' : ''}}" data-id="{{item._id}}" bindtap="selectProject">{{item.name}}</view>
+        <view class="project-chip-wrap">
+          <view class="project-chip {{selectedProjectId === item._id ? 'active' : ''}}" data-id="{{item._id}}" bindtap="selectProject">{{item.name}}</view>
+          <view class="project-chip-delete" data-id="{{item._id}}" catchtap="deleteProject">×</view>
+        </view>
       </block>
     </scroll-view>
 
