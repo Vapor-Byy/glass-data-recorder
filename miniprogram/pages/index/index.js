@@ -27,6 +27,7 @@ const notesService = {
         content,
         type,
         project_id: projectId || '',
+        completed: false, // 新增字段
         created_at: now,
         updated_at: now,
       },
@@ -45,6 +46,12 @@ const notesService = {
   removeNote(id) {
     return db.collection(NOTES).doc(id).remove();
   },
+
+  toggleComplete(id, completed) {
+    return db.collection(NOTES).doc(id).update({
+      data: { completed }
+    });
+  }
 };
 
 function formatTime(isoString) {
@@ -59,9 +66,10 @@ function normalizeNote(note) {
     _id: note._id,
     content: note.content || '',
     type,
+    completed: note.completed || false, // 关键
     project_id: type === 'longterm' ? (note.project_id || '') : '',
-    created_at: note.created_at || note.updated_at || '',
-    updated_at: note.updated_at || note.created_at || '',
+    created_at: note.created_at || '',
+    updated_at: note.updated_at || '',
     displayTime: formatTime(note.updated_at || note.created_at),
   };
 }
@@ -74,8 +82,14 @@ function normalizeProject(project) {
   };
 }
 
-function sortByUpdated(notes) {
-  return [...notes].sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)));
+// ⭐核心排序：未完成在前
+function sortByStatusAndTime(notes) {
+  return [...notes].sort((a, b) => {
+    if (a.completed !== b.completed) {
+      return a.completed ? 1 : -1;
+    }
+    return String(b.updated_at).localeCompare(String(a.updated_at));
+  });
 }
 
 function buildViewModel(notes, projects, query, selectedProjectId) {
@@ -83,11 +97,16 @@ function buildViewModel(notes, projects, query, selectedProjectId) {
   const normalizedNotes = notes.map(normalizeNote);
   const normalizedProjects = projects.map(normalizeProject);
   const selectedId = selectedProjectId || (normalizedProjects[0] && normalizedProjects[0]._id) || '';
+
   const match = (note) => !keyword || note.content.toLowerCase().includes(keyword);
-  const temporaryNotes = sortByUpdated(normalizedNotes.filter((note) => note.type === 'temporary' && match(note)));
-  const longtermNotes = sortByUpdated(normalizedNotes.filter((note) => (
-    note.type === 'longterm' && note.project_id === selectedId && match(note)
-  )));
+
+  const temporaryNotes = sortByStatusAndTime(
+    normalizedNotes.filter(n => n.type === 'temporary' && match(n))
+  );
+
+  const longtermNotes = sortByStatusAndTime(
+    normalizedNotes.filter(n => n.type === 'longterm' && n.project_id === selectedId && match(n))
+  );
 
   return {
     notes: normalizedNotes,
@@ -95,8 +114,8 @@ function buildViewModel(notes, projects, query, selectedProjectId) {
     selectedProjectId: selectedId,
     temporaryNotes,
     longtermNotes,
-    temporaryCount: normalizedNotes.filter((note) => note.type === 'temporary').length,
-    longtermCount: normalizedNotes.filter((note) => note.type === 'longterm').length,
+    temporaryCount: normalizedNotes.filter(n => n.type === 'temporary').length,
+    longtermCount: normalizedNotes.filter(n => n.type === 'longterm').length,
     projectCount: normalizedProjects.length,
   };
 }
@@ -155,6 +174,23 @@ Page({
     }
   },
 
+  // ⭐点击卡片切换完成状态
+  toggleComplete(event) {
+    const id = event.currentTarget.dataset.id;
+    const note = this.data.notes.find(n => n._id === id);
+    if (!note) return;
+
+    const completed = !note.completed;
+
+    notesService.toggleComplete(id, completed)
+      .then(() => {
+        if (!this.notesWatcher) this.loadAll();
+      })
+      .catch(() => {
+        wx.showToast({ title: '更新失败', icon: 'none' });
+      });
+  },
+
   setMode(event) {
     this.setData({ mode: event.currentTarget.dataset.mode || 'temporary' });
   },
@@ -167,17 +203,9 @@ Page({
     });
   },
 
-  onTemporaryInput(event) {
-    this.setData({ temporaryInput: event.detail.value });
-  },
-
-  onProjectInput(event) {
-    this.setData({ projectInput: event.detail.value });
-  },
-
-  onLongtermInput(event) {
-    this.setData({ longtermInput: event.detail.value });
-  },
+  onTemporaryInput(e) { this.setData({ temporaryInput: e.detail.value }); },
+  onProjectInput(e) { this.setData({ projectInput: e.detail.value }); },
+  onLongtermInput(e) { this.setData({ longtermInput: e.detail.value }); },
 
   selectProject(event) {
     const selectedProjectId = event.currentTarget.dataset.id || '';
@@ -189,40 +217,22 @@ Page({
   async addTemporary() {
     const content = this.data.temporaryInput.trim();
     if (!content) return;
-    try {
-      await notesService.createTemporary(content);
-      this.setData({ temporaryInput: '' });
-      if (!this.notesWatcher) this.loadAll();
-    } catch (error) {
-      console.error('新增临时待办失败', error);
-      wx.showToast({ title: '新增失败', icon: 'none' });
-    }
+    await notesService.createTemporary(content);
+    this.setData({ temporaryInput: '' });
   },
 
   async addProject() {
     const name = this.data.projectInput.trim();
     if (!name) return;
-    try {
-      await notesService.createProject(name);
-      this.setData({ projectInput: '' });
-      if (!this.projectsWatcher) this.loadAll();
-    } catch (error) {
-      console.error('创建项目失败', error);
-      wx.showToast({ title: '创建失败', icon: 'none' });
-    }
+    await notesService.createProject(name);
+    this.setData({ projectInput: '' });
   },
 
   async addLongterm() {
     const content = this.data.longtermInput.trim();
     if (!content || !this.data.selectedProjectId) return;
-    try {
-      await notesService.createLongterm(content, this.data.selectedProjectId);
-      this.setData({ longtermInput: '' });
-      if (!this.notesWatcher) this.loadAll();
-    } catch (error) {
-      console.error('新增长期待办失败', error);
-      wx.showToast({ title: '新增失败', icon: 'none' });
-    }
+    await notesService.createLongterm(content, this.data.selectedProjectId);
+    this.setData({ longtermInput: '' });
   },
 
   deleteNote(event) {
@@ -230,56 +240,25 @@ Page({
     if (!id) return;
     wx.showModal({
       title: '删除待办',
-      content: '确认删除这条内容吗？',
+      content: '确认删除？',
       success: async (res) => {
         if (!res.confirm) return;
-        try {
-          await notesService.removeNote(id);
-          if (!this.notesWatcher) this.loadAll();
-        } catch (error) {
-          console.error('删除失败', error);
-          wx.showToast({ title: '删除失败', icon: 'none' });
-        }
+        await notesService.removeNote(id);
       },
     });
   },
 
   setupWatchers() {
-    if (this.notesWatcher) this.notesWatcher.close();
-    if (this.projectsWatcher) this.projectsWatcher.close();
-
     this.notesWatcher = db.collection(NOTES).watch({
       onChange: (snapshot) => {
-        if (!snapshot || !snapshot.docs) return;
-        this.applyData(snapshot.docs, this.data.projects, 'notes 实时同步');
-      },
-      onError: (error) => this.retryWatch(error),
+        this.applyData(snapshot.docs, this.data.projects, '实时同步');
+      }
     });
 
     this.projectsWatcher = db.collection(PROJECTS).watch({
       onChange: (snapshot) => {
-        if (!snapshot || !snapshot.docs) return;
-        this.applyData(this.data.notes, snapshot.docs, 'projects 实时同步');
-      },
-      onError: (error) => this.retryWatch(error),
+        this.applyData(this.data.notes, snapshot.docs, '实时同步');
+      }
     });
-  },
-
-  retryWatch(error) {
-    console.warn('watch 监听出错', error);
-    if (this.notesWatcher) {
-      this.notesWatcher.close();
-      this.notesWatcher = null;
-    }
-    if (this.projectsWatcher) {
-      this.projectsWatcher.close();
-      this.projectsWatcher = null;
-    }
-    if (this.retryTimer) clearTimeout(this.retryTimer);
-    this.retryTimer = setTimeout(() => {
-      this.retryTimer = null;
-      this.loadAll();
-      this.setupWatchers();
-    }, 3000);
-  },
+  }
 });

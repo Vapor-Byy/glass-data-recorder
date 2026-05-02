@@ -222,3 +222,20 @@ page {
   text-align: center;
   padding: 64rpx 0;
 }
+/* ===== 完成态 ===== */
+.note-card.completed {
+  opacity: 0.55;
+}
+
+.note-card.completed .note-content {
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+
+.note-card.completed .note-time {
+  color: #9ca3af;
+}
+
+.note-card.completed .delete-button {
+  opacity: 0.6;
+}
