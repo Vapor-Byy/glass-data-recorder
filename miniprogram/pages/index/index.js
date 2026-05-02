@@ -100,22 +100,29 @@ function buildViewModel(notes, projects, query, selectedProjectId) {
 
   const match = (note) => !keyword || note.content.toLowerCase().includes(keyword);
 
-  const temporaryNotes = sortByStatusAndTime(
-    normalizedNotes.filter(n => n.type === 'temporary' && match(n))
-  );
+  let temporaryCount = 0;
+  let longtermCount = 0;
+  const temporaryFiltered = [];
+  const longtermFiltered = [];
 
-  const longtermNotes = sortByStatusAndTime(
-    normalizedNotes.filter(n => n.type === 'longterm' && n.project_id === selectedId && match(n))
-  );
+  for (const note of normalizedNotes) {
+    if (note.type === 'temporary') {
+      temporaryCount++;
+      if (match(note)) temporaryFiltered.push(note);
+    } else {
+      longtermCount++;
+      if (note.project_id === selectedId && match(note)) longtermFiltered.push(note);
+    }
+  }
 
   return {
     notes: normalizedNotes,
     projects: normalizedProjects,
     selectedProjectId: selectedId,
-    temporaryNotes,
-    longtermNotes,
-    temporaryCount: normalizedNotes.filter(n => n.type === 'temporary').length,
-    longtermCount: normalizedNotes.filter(n => n.type === 'longterm').length,
+    temporaryNotes: sortByStatusAndTime(temporaryFiltered),
+    longtermNotes: sortByStatusAndTime(longtermFiltered),
+    temporaryCount,
+    longtermCount,
     projectCount: normalizedProjects.length,
   };
 }
@@ -177,16 +184,17 @@ Page({
   // ⭐点击卡片切换完成状态
   toggleComplete(event) {
     const id = event.currentTarget.dataset.id;
-    const note = this.data.notes.find(n => n._id === id);
-    if (!note) return;
+    const notes = this.data.notes;
+    const idx = notes.findIndex(n => n._id === id);
+    if (idx === -1) return;
 
-    const completed = !note.completed;
+    const completed = !notes[idx].completed;
+    const updated = notes.map((n, i) => i === idx ? { ...n, completed } : n);
+    this.applyData(updated, this.data.projects, this.data.syncStatus);
 
     notesService.toggleComplete(id, completed)
-      .then(() => {
-        if (!this.notesWatcher) this.loadAll();
-      })
       .catch(() => {
+        this.applyData(notes, this.data.projects, this.data.syncStatus);
         wx.showToast({ title: '更新失败', icon: 'none' });
       });
   },
@@ -217,22 +225,34 @@ Page({
   async addTemporary() {
     const content = this.data.temporaryInput.trim();
     if (!content) return;
-    await notesService.createTemporary(content);
-    this.setData({ temporaryInput: '' });
+    try {
+      await notesService.createTemporary(content);
+      this.setData({ temporaryInput: '' });
+    } catch {
+      wx.showToast({ title: '新增失败', icon: 'none' });
+    }
   },
 
   async addProject() {
     const name = this.data.projectInput.trim();
     if (!name) return;
-    await notesService.createProject(name);
-    this.setData({ projectInput: '' });
+    try {
+      await notesService.createProject(name);
+      this.setData({ projectInput: '' });
+    } catch {
+      wx.showToast({ title: '创建失败', icon: 'none' });
+    }
   },
 
   async addLongterm() {
     const content = this.data.longtermInput.trim();
     if (!content || !this.data.selectedProjectId) return;
-    await notesService.createLongterm(content, this.data.selectedProjectId);
-    this.setData({ longtermInput: '' });
+    try {
+      await notesService.createLongterm(content, this.data.selectedProjectId);
+      this.setData({ longtermInput: '' });
+    } catch {
+      wx.showToast({ title: '新增失败', icon: 'none' });
+    }
   },
 
   deleteNote(event) {
@@ -249,16 +269,27 @@ Page({
   },
 
   setupWatchers() {
+    const retry = () => {
+      if (this.retryTimer) clearTimeout(this.retryTimer);
+      this.retryTimer = setTimeout(() => {
+        if (this.notesWatcher) { try { this.notesWatcher.close(); } catch (_) {} }
+        if (this.projectsWatcher) { try { this.projectsWatcher.close(); } catch (_) {} }
+        this.setupWatchers();
+      }, 3000);
+    };
+
     this.notesWatcher = db.collection(NOTES).watch({
       onChange: (snapshot) => {
         this.applyData(snapshot.docs, this.data.projects, '实时同步');
-      }
+      },
+      onError: retry,
     });
 
     this.projectsWatcher = db.collection(PROJECTS).watch({
       onChange: (snapshot) => {
         this.applyData(this.data.notes, snapshot.docs, '实时同步');
-      }
+      },
+      onError: retry,
     });
   }
 });

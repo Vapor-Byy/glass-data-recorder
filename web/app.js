@@ -24,7 +24,7 @@ const els = {
     longtermCount: document.getElementById('longtermCount'),
     projectCount: document.getElementById('projectCount'),
     temporaryPanel: document.getElementById('temporaryPanel'),
-    longtermPanel: document.getElementById('longtermPanel'),
+    projectsPanel: document.getElementById('projectsPanel'),
     temporaryInput: document.getElementById('temporaryInput'),
     addTemporaryButton: document.getElementById('addTemporaryButton'),
     temporaryList: document.getElementById('temporaryList'),
@@ -36,6 +36,8 @@ const els = {
     addLongtermButton: document.getElementById('addLongtermButton'),
     longtermList: document.getElementById('longtermList'),
     longtermEmpty: document.getElementById('longtermEmpty'),
+    statTemporary: document.getElementById('statTemporary'),
+    statProjects: document.getElementById('statProjects'),
 };
 
 const notesService = {
@@ -56,6 +58,7 @@ const notesService = {
                 content,
                 type,
                 project_id: projectId,
+                completed: false,
                 created_at: now,
                 updated_at: now,
             },
@@ -73,6 +76,12 @@ const notesService = {
 
     async removeNote(id) {
         return db.collection(NOTES).doc(id).remove();
+    },
+
+    async toggleComplete(id, completed) {
+        return db.collection(NOTES).doc(id).update({
+            data: { completed, updated_at: new Date().toISOString() },
+        });
     },
 };
 
@@ -95,6 +104,7 @@ function normalizeNote(note) {
         _id: note._id,
         content: note.content || '',
         type,
+        completed: note.completed || false,
         project_id: type === 'longterm' ? (note.project_id || '') : '',
         created_at: note.created_at || note.updated_at || '',
         updated_at: note.updated_at || note.created_at || '',
@@ -119,8 +129,11 @@ function formatTime(isoString) {
     return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
-function sortByUpdated(notes) {
-    return [...notes].sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)));
+function sortByStatusAndTime(notes) {
+    return [...notes].sort((a, b) => {
+        if (a.completed !== b.completed) return a.completed ? 1 : -1;
+        return String(b.updated_at).localeCompare(String(a.updated_at));
+    });
 }
 
 function matchesQuery(note) {
@@ -129,11 +142,11 @@ function matchesQuery(note) {
 }
 
 function getTemporaryNotes() {
-    return sortByUpdated(state.notes.filter((note) => note.type === 'temporary' && matchesQuery(note)));
+    return sortByStatusAndTime(state.notes.filter((note) => note.type === 'temporary' && matchesQuery(note)));
 }
 
 function getLongtermNotes() {
-    return sortByUpdated(state.notes.filter((note) => (
+    return sortByStatusAndTime(state.notes.filter((note) => (
         note.type === 'longterm' && note.project_id === state.selectedProjectId && matchesQuery(note)
     )));
 }
@@ -148,6 +161,9 @@ function renderCounts() {
     els.temporaryCount.textContent = state.notes.filter((note) => note.type === 'temporary').length;
     els.longtermCount.textContent = state.notes.filter((note) => note.type === 'longterm').length;
     els.projectCount.textContent = state.projects.length;
+
+    els.statTemporary.classList.toggle('active', state.mode === 'temporary');
+    els.statProjects.classList.toggle('active', state.mode === 'projects');
 }
 
 function renderMode() {
@@ -155,12 +171,13 @@ function renderMode() {
         button.classList.toggle('active', button.dataset.mode === state.mode);
     });
     els.temporaryPanel.classList.toggle('hidden', state.mode !== 'temporary');
-    els.longtermPanel.classList.toggle('hidden', state.mode !== 'longterm');
+    els.projectsPanel.classList.toggle('hidden', state.mode !== 'projects');
 }
 
 function createNoteCard(note) {
     const card = document.createElement('article');
-    card.className = 'note-card';
+    card.className = `note-card${note.completed ? ' completed' : ''}`;
+    card.style.cursor = 'pointer';
 
     const main = document.createElement('div');
     main.className = 'note-main';
@@ -177,7 +194,12 @@ function createNoteCard(note) {
     button.className = 'danger';
     button.type = 'button';
     button.textContent = '删除';
-    button.addEventListener('click', () => removeNote(note._id));
+    button.addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeNote(note._id);
+    });
+
+    card.addEventListener('click', () => toggleComplete(note._id, note.completed));
 
     main.appendChild(content);
     main.appendChild(time);
@@ -212,13 +234,10 @@ function renderNotes() {
     els.temporaryList.innerHTML = '';
     els.longtermList.innerHTML = '';
     els.temporaryEmpty.style.display = temporaryNotes.length ? 'none' : 'block';
-    els.longtermEmpty.style.display = longtermNotes.length || !state.projects.length ? 'none' : 'block';
-    if (!state.projects.length) {
-        els.longtermEmpty.style.display = 'block';
-        els.longtermEmpty.textContent = '先创建一个长期项目。';
-    } else {
-        els.longtermEmpty.textContent = '当前项目暂无内容。';
-    }
+
+    const noProjects = !state.projects.length;
+    els.longtermEmpty.style.display = longtermNotes.length ? 'none' : 'block';
+    els.longtermEmpty.textContent = noProjects ? '先创建一个长期项目。' : '当前项目暂无内容。';
 
     temporaryNotes.forEach((note) => els.temporaryList.appendChild(createNoteCard(note)));
     longtermNotes.forEach((note) => els.longtermList.appendChild(createNoteCard(note)));
@@ -229,6 +248,11 @@ function render() {
     renderMode();
     renderProjects();
     renderNotes();
+}
+
+function setMode(mode) {
+    state.mode = mode;
+    render();
 }
 
 async function refreshAll(silent = false) {
@@ -301,13 +325,29 @@ async function removeNote(id) {
     }
 }
 
+async function toggleComplete(id, currentCompleted) {
+    const completed = !currentCompleted;
+    state.notes = state.notes.map((n) => n._id === id ? { ...n, completed } : n);
+    render();
+    try {
+        await notesService.toggleComplete(id, completed);
+    } catch (error) {
+        console.error('更新失败', error);
+        state.notes = state.notes.map((n) => n._id === id ? { ...n, completed: currentCompleted } : n);
+        render();
+    }
+}
+
 function bindEvents() {
     document.querySelectorAll('.mode-button').forEach((button) => {
-        button.addEventListener('click', () => {
-            state.mode = button.dataset.mode || 'temporary';
-            render();
-        });
+        button.addEventListener('click', () => setMode(button.dataset.mode || 'temporary'));
     });
+
+    [els.statTemporary, els.statProjects].forEach((card) => {
+        card.addEventListener('click', () => setMode(card.dataset.mode));
+        card.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') setMode(card.dataset.mode); });
+    });
+
     els.searchInput.addEventListener('input', (event) => {
         state.query = event.target.value;
         render();
@@ -346,7 +386,6 @@ function init() {
         .catch((error) => {
             console.error('CloudBase 初始化失败', error);
             setStatus(error.message || '初始化失败');
-            // 禁用所有输入框和按钮，提示用户刷新
             document.querySelectorAll('input, button').forEach((el) => {
                 el.disabled = true;
             });

@@ -1,16 +1,18 @@
 <view class="page">
   <view class="hero">
     <view>
-      <text class="eyebrow">VAPOR NOTES</text>
-      <text class="title">Vapor Notes</text>
-      <text class="subtitle">临时待办快速记录，长期待办按项目沉淀。</text>
+      <text class="eyebrow">Vapor 邮箱：14521693@qq.com</text>
+      <text class="title">Remember</text>
+      <text class="subtitle">需要添加功能请从上方邮箱联系，
+      看到都会回复，
+      您的建议对我帮助很大。</text>
     </view>
     <view class="sync-pill">{{syncStatus}}</view>
   </view>
 
   <view class="mode-switch">
     <view class="mode-item {{mode === 'temporary' ? 'active' : ''}}" data-mode="temporary" bindtap="setMode">临时待办</view>
-    <view class="mode-item {{mode === 'longterm' ? 'active' : ''}}" data-mode="longterm" bindtap="setMode">长期待办</view>
+    <view class="mode-item {{mode === 'projects' ? 'active' : ''}}" data-mode="projects" bindtap="setMode">项目待办</view>
   </view>
 
   <view class="search-card">
@@ -18,17 +20,19 @@
   </view>
 
   <view class="stats-grid">
-    <view class="stat-card">
+    <view class="stat-card stat-card--tap {{mode === 'temporary' ? 'active' : ''}}" data-mode="temporary" bindtap="setMode">
       <text class="stat-label">临时</text>
       <text class="stat-value">{{temporaryCount}}</text>
     </view>
-    <view class="stat-card">
-      <text class="stat-label">长期</text>
-      <text class="stat-value">{{longtermCount}}</text>
-    </view>
-    <view class="stat-card">
-      <text class="stat-label">项目</text>
-      <text class="stat-value">{{projectCount}}</text>
+    <view class="stat-card stat-card--projects stat-card--tap {{mode === 'projects' ? 'active' : ''}}" data-mode="projects" bindtap="setMode">
+      <view class="stat-card-top">
+        <text class="stat-label">项目</text>
+        <text class="stat-value">{{projectCount}}</text>
+      </view>
+      <view class="stat-card-sub">
+        <text class="stat-sub-label">长期待办</text>
+        <text class="stat-sub-value">{{longtermCount}}</text>
+      </view>
     </view>
   </view>
 
@@ -41,35 +45,30 @@
 
     <scroll-view class="note-list" scroll-y="true">
       <block wx:for="{{temporaryNotes}}" wx:key="_id">
-        
-        <!-- ⭐关键改动：绑定点击 + 完成态 class -->
-        <view 
-          class="note-card {{item.completed ? 'completed' : ''}}" 
-          data-id="{{item._id}}" 
+        <view
+          class="note-card {{item.completed ? 'completed' : ''}}"
+          data-id="{{item._id}}"
           bindtap="toggleComplete"
         >
           <view class="note-main">
             <text class="note-content">{{item.content}}</text>
             <text class="note-time">{{item.displayTime}}</text>
           </view>
-
-          <!-- 删除按钮保留，但阻止冒泡 -->
-          <button 
-            class="delete-button" 
-            data-id="{{item._id}}" 
+          <button
+            class="delete-button"
+            data-id="{{item._id}}"
             catchtap="deleteNote"
           >
             删除
           </button>
         </view>
-
       </block>
       <view wx:if="{{temporaryNotes.length === 0}}" class="empty-state">暂无临时待办。</view>
     </scroll-view>
   </block>
 
-  <!-- 长期 -->
-  <block wx:if="{{mode === 'longterm'}}">
+  <!-- 项目 -->
+  <block wx:if="{{mode === 'projects'}}">
     <view class="input-card">
       <input class="note-input" placeholder="新建项目" value="{{projectInput}}" bindinput="onProjectInput" confirm-type="done" bindconfirm="addProject" />
       <button class="add-button" bindtap="addProject">项目</button>
@@ -88,27 +87,23 @@
 
     <scroll-view class="note-list" scroll-y="true">
       <block wx:for="{{longtermNotes}}" wx:key="_id">
-
-        <!-- ⭐同样改这里 -->
-        <view 
-          class="note-card {{item.completed ? 'completed' : ''}}" 
-          data-id="{{item._id}}" 
+        <view
+          class="note-card {{item.completed ? 'completed' : ''}}"
+          data-id="{{item._id}}"
           bindtap="toggleComplete"
         >
           <view class="note-main">
             <text class="note-content">{{item.content}}</text>
             <text class="note-time">{{item.displayTime}}</text>
           </view>
-
-          <button 
-            class="delete-button" 
-            data-id="{{item._id}}" 
+          <button
+            class="delete-button"
+            data-id="{{item._id}}"
             catchtap="deleteNote"
           >
             删除
           </button>
         </view>
-
       </block>
 
       <view wx:if="{{projects.length === 0}}" class="empty-state">先创建一个长期项目。</view>

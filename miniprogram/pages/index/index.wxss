@@ -122,7 +122,7 @@ page {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 16rpx;
   margin-bottom: 18rpx;
 }
@@ -131,6 +131,14 @@ page {
   min-height: 116rpx;
   padding: 20rpx;
   border-radius: 28rpx;
+}
+
+.stat-card--tap {
+  transition: opacity 0.1s;
+}
+
+.stat-card--tap.active {
+  outline: 2rpx solid #1f2937;
 }
 
 .stat-label {
@@ -144,6 +152,35 @@ page {
   margin-top: 10rpx;
   font-size: 40rpx;
   font-weight: 800;
+}
+
+.stat-card--projects {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.stat-card-top .stat-value {
+  font-size: 40rpx;
+}
+
+.stat-card-sub {
+  display: flex;
+  align-items: baseline;
+  gap: 10rpx;
+  margin-top: 10rpx;
+  padding-top: 10rpx;
+  border-top: 1rpx solid rgba(107, 114, 128, 0.2);
+}
+
+.stat-sub-label {
+  color: #6b7280;
+  font-size: 20rpx;
+}
+
+.stat-sub-value {
+  font-size: 28rpx;
+  font-weight: 700;
 }
 
 .project-list {

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vapor Notes</title>
+  <title>REMEMBER</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://imgcache.qq.com/qcloud/tcbjs/1.10.10/tcb.js"></script>
   <script>
@@ -16,9 +16,9 @@
   <main class="app">
     <section class="hero glass">
       <div>
-        <p class="eyebrow">VAPOR NOTES</p>
-        <h1>Vapor Notes</h1>
-        <p class="subtitle">临时待办快速记录，长期待办按项目沉淀。</p>
+        <p class="eyebrow">REMEMBER</p>
+        <h1>REMEMBER</h1>
+        <p class="subtitle">临时待办快速记录，长期待办按项目分类。</p>
       </div>
       <div class="hero-meta">
         <button id="themeToggle" class="icon-button" type="button">夜</button>
@@ -28,7 +28,7 @@
 
     <section class="mode-switch glass">
       <button class="mode-button active" type="button" data-mode="temporary">临时待办</button>
-      <button class="mode-button" type="button" data-mode="longterm">长期待办</button>
+      <button class="mode-button" type="button" data-mode="projects">项目待办</button>
     </section>
 
     <section class="search-card glass">
@@ -36,17 +36,19 @@
     </section>
 
     <section class="summary">
-      <div class="summary-card glass">
+      <div class="summary-card glass" id="statTemporary" data-mode="temporary" role="button" tabindex="0">
         <span>临时</span>
         <strong id="temporaryCount">0</strong>
       </div>
-      <div class="summary-card glass">
-        <span>长期</span>
-        <strong id="longtermCount">0</strong>
-      </div>
-      <div class="summary-card glass">
-        <span>项目</span>
-        <strong id="projectCount">0</strong>
+      <div class="summary-card glass summary-card--projects" id="statProjects" data-mode="projects" role="button" tabindex="0">
+        <div class="summary-card-top">
+          <span>项目</span>
+          <strong id="projectCount">0</strong>
+        </div>
+        <div class="summary-card-sub">
+          <span class="summary-sub-label">长期待办</span>
+          <strong id="longtermCount">0</strong>
+        </div>
       </div>
     </section>
 
@@ -59,7 +61,7 @@
       <div id="temporaryEmpty" class="empty-state">暂无临时待办。</div>
     </section>
 
-    <section id="longtermPanel" class="panel glass hidden">
+    <section id="projectsPanel" class="panel glass hidden">
       <div class="input-row">
         <input id="projectInput" type="text" placeholder="新建长期项目">
         <button id="addProjectButton" type="button">项目</button>
