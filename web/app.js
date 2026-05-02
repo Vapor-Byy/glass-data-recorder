@@ -254,31 +254,51 @@ async function refreshAll(silent = false) {
 async function addTemporary() {
     const content = els.temporaryInput.value.trim();
     if (!content) return els.temporaryInput.focus();
-    await notesService.createNote(content, 'temporary');
-    els.temporaryInput.value = '';
-    await refreshAll(true);
+    try {
+        await notesService.createNote(content, 'temporary');
+        els.temporaryInput.value = '';
+        await refreshAll(true);
+    } catch (error) {
+        console.error('新增临时待办失败', error);
+        setStatus('新增失败');
+    }
 }
 
 async function addProject() {
     const name = els.projectInput.value.trim();
     if (!name) return els.projectInput.focus();
-    await notesService.createProject(name);
-    els.projectInput.value = '';
-    await refreshAll(true);
+    try {
+        await notesService.createProject(name);
+        els.projectInput.value = '';
+        await refreshAll(true);
+    } catch (error) {
+        console.error('创建项目失败', error);
+        setStatus('创建失败');
+    }
 }
 
 async function addLongterm() {
     const content = els.longtermInput.value.trim();
     if (!content || !state.selectedProjectId) return;
-    await notesService.createNote(content, 'longterm', state.selectedProjectId);
-    els.longtermInput.value = '';
-    await refreshAll(true);
+    try {
+        await notesService.createNote(content, 'longterm', state.selectedProjectId);
+        els.longtermInput.value = '';
+        await refreshAll(true);
+    } catch (error) {
+        console.error('新增长期待办失败', error);
+        setStatus('新增失败');
+    }
 }
 
 async function removeNote(id) {
     if (!confirm('确认删除这条内容？')) return;
-    await notesService.removeNote(id);
-    await refreshAll(true);
+    try {
+        await notesService.removeNote(id);
+        await refreshAll(true);
+    } catch (error) {
+        console.error('删除失败', error);
+        setStatus('删除失败');
+    }
 }
 
 function bindEvents() {
@@ -326,6 +346,10 @@ function init() {
         .catch((error) => {
             console.error('CloudBase 初始化失败', error);
             setStatus(error.message || '初始化失败');
+            // 禁用所有输入框和按钮，提示用户刷新
+            document.querySelectorAll('input, button').forEach((el) => {
+                el.disabled = true;
+            });
         });
 }
 
