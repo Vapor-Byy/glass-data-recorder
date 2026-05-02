@@ -1,0 +1,12 @@
+{
+  "miniprogramRoot": "./",
+  "projectname": "cross-end-note-sync",
+  "appid": "tourist",
+  "setting": {
+    "urlCheck": false,
+    "es6": true,
+    "enhance": true,
+    "postcss": false,
+    "minified": false
+  }
+}

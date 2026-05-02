@@ -1,0 +1,31 @@
+<view class="page">
+  <view class="header">
+    <text class="title">跨端同步备忘录</text>
+    <text class="subtitle">云数据库 notes 集合 + watch 实时同步</text>
+  </view>
+
+  <view class="input-area">
+    <input class="note-input" placeholder="输入备忘录内容，点击添加" value="{{newContent}}" bindinput="onInputChange" confirm-type="done" bindconfirm="onAddNote" />
+    <button class="add-button" bindtap="onAddNote">新增</button>
+  </view>
+
+  <view class="tips">当前数据源：微信云开发数据库 <text class="highlight">notes</text></view>
+
+  <view class="list-header">
+    <text>备忘录列表</text>
+    <text class="list-count">{{notes.length}} 条</text>
+  </view>
+
+  <scroll-view class="note-list" scroll-y="true">
+    <block wx:for="{{notes}}" wx:key="_id">
+      <view class="note-card">
+        <view class="note-main">
+          <text class="note-content">{{item.content}}</text>
+          <text class="note-time">{{item.created_at}}</text>
+        </view>
+        <button class="delete-button" data-id="{{item._id}}" bindtap="onDeleteNote">删除</button>
+      </view>
+    </block>
+    <view wx:if="{{notes.length === 0}}" class="empty-state">暂无备忘录，试试先新增一条。</view>
+  </scroll-view>
+</view>

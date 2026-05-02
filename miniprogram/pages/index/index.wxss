@@ -1,0 +1,114 @@
+.page {
+  padding: 20px;
+  background-color: #f2f6fc;
+  min-height: 100vh;
+}
+
+.header {
+  margin-bottom: 18px;
+}
+
+.title {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: #1a202c;
+}
+
+.subtitle {
+  display: block;
+  margin-top: 6px;
+  color: #4a5568;
+  font-size: 13px;
+}
+
+.input-area {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.note-input {
+  flex: 1;
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #d2d6dc;
+  background-color: #ffffff;
+}
+
+.add-button {
+  width: 80px;
+  border-radius: 10px;
+  background-color: #1e88e5;
+  color: #ffffff;
+}
+
+.tips {
+  color: #718096;
+  font-size: 12px;
+  margin-bottom: 16px;
+}
+
+.highlight {
+  color: #2b6cb0;
+  font-weight: 700;
+}
+
+.list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.list-count {
+  color: #4a5568;
+  font-size: 12px;
+}
+
+.note-list {
+  min-height: 240px;
+  max-height: calc(100vh - 220px);
+}
+
+.note-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px;
+  margin-bottom: 10px;
+  background-color: #ffffff;
+  border-radius: 14px;
+  box-shadow: 0 8px 18px rgba(81, 96, 123, 0.08);
+}
+
+.note-main {
+  max-width: calc(100% - 90px);
+}
+
+.note-content {
+  display: block;
+  font-size: 14px;
+  color: #2d3748;
+  margin-bottom: 8px;
+}
+
+.note-time {
+  color: #718096;
+  font-size: 11px;
+}
+
+.delete-button {
+  width: 72px;
+  border-radius: 10px;
+  background-color: #e53e3e;
+  color: #ffffff;
+}
+
+.empty-state {
+  color: #718096;
+  font-size: 13px;
+  text-align: center;
+  margin-top: 36px;
+}

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>跨端同步备忘录 - Web</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://unpkg.com/@cloudbase/js-sdk@1.7.6/dist/index.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>跨端同步备忘录</h1>
+      <p>Web 端和小程序端共用同一云数据库 `notes` 集合。</p>
+    </header>
+
+    <section class="panel">
+      <div class="input-row">
+        <textarea id="noteInput" placeholder="输入备忘录内容，点击添加" rows="3"></textarea>
+        <button id="addButton">新增</button>
+      </div>
+      <div class="action-row">
+        <button id="refreshButton">刷新列表</button>
+        <span class="status" id="statusText">初始化中…</span>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="list-header">
+        <h2>备忘录列表</h2>
+        <span id="countText">0 条</span>
+      </div>
+      <div id="noteList" class="note-list"></div>
+      <div id="emptyState" class="empty-state">暂无备忘录，请先添加一条。</div>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
